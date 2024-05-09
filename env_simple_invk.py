@@ -36,17 +36,18 @@ def do_simple_invk():
                 time.sleep(time_until_next_step)
 
             # Get the final position of the cube
-            cube_id = mujoco.mj_name2id(m, 1, "box")
-            cube_pos = data.xpos[cube_id]
+            cube_id  = m.body("box").id
+            cube_pos = data.geom_xpos[cube_id]
 
-            ee_id = mujoco.mj_name2id(m, 1, "joint5-pad")
-            ee_pos = data.xpos[ee_id]
+            ee_id    = m.body("joint5-pad").id
+            ee_pos   = data.geom_xpos[ee_id]
 
             print("Cube dist:", np.linalg.norm(cube_pos - ee_pos))
-            if np.linalg.norm(cube_pos - ee_pos) < 0.26:
+            if np.linalg.norm(cube_pos - ee_pos) < 0.02:
+
                 print("Cube reached the target position")
-                cube_pos = np.random.rand(3) * 2 - 1
-                data.xpos[cube_id] = cube_pos
+                data.joint("red_box_joint").qpos[:3] = [np.random.rand()*0.2, np.random.rand()*0.2, 0.01]
+                mujoco.mj_step(m, data)
 
                 mujoco.mj_step(m, data)
                 viewer.sync()
