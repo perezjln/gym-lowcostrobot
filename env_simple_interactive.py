@@ -8,7 +8,7 @@ from envs.interface import SimulatedRobot
 
 def do_interactive_sim():
 
-    m = mujoco.MjModel.from_xml_path('low_cost_robot/scene.xml')
+    m = mujoco.MjModel.from_xml_path('low_cost_robot/scene_one_cube.xml')
     data = mujoco.MjData(m)
     robot = SimulatedRobot(m, data)
 
