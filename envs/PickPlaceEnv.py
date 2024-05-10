@@ -12,7 +12,7 @@ from envs.interface import SimulatedRobot
 
 class PickPlaceCubeEnv(gym.Env):
 
-    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False):
+    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, action_mode='joint', max_episode_steps=200):
         super(PickPlaceCubeEnv, self).__init__()
 
         # Load the MuJoCo model and data
@@ -20,13 +20,20 @@ class PickPlaceCubeEnv(gym.Env):
         self.data   = mujoco.MjData(self.model)
         self.robot  = SimulatedRobot(self.model, self.data)
 
+        self.current_step = 0
+        self.max_episode_steps = max_episode_steps
+
         self.do_render = render
         if self.do_render:
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
             self.step_start = time.time()
 
         # Define the action space and observation space
-        self.action_space      = spaces.Box(low=-1.0, high=1.0, shape=(3+1,), dtype=np.float32)
+        self.action_mode = action_mode
+        if action_mode == 'ee':
+            self.action_space      = spaces.Box(low=-1.0, high=1.0, shape=(3+1,), dtype=np.float32)
+        else:
+            self.action_space      = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.data.xpos.flatten().shape[0] + 3,), dtype=np.float32)
 
         # Initialize the robot and target positions
@@ -41,6 +48,7 @@ class PickPlaceCubeEnv(gym.Env):
         mujoco.mj_step(self.model, self.data)
 
         self.step_start = time.time()
+        self.current_step = 0        
         return np.concatenate([self.data.xpos.flatten(), self.target_pos])
 
     def reward(self):
@@ -49,16 +57,19 @@ class PickPlaceCubeEnv(gym.Env):
         return np.linalg.norm(cube_pos - self.target_pos)
 
     def step(self, action):
+        
+        if self.action_mode == 'ee':
+            # Update the robot position based on the action
+            ee_id = self.model.body("joint5-pad").id
+            ee_target_pos = self.data.xpos[ee_id] + action
 
-        # Update the robot position based on the action
-        ee_id = self.model.body("joint5-pad").id
-        ee_target_pos = self.data.xpos[ee_id] + action
-
-        # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-        q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
-        q_target_pos[-1:] = np.sign(action[-1]) # Open or close the gripper
-        self.robot.set_target_pos(q_target_pos)
-
+            # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
+            q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
+            q_target_pos[-1:] = np.sign(action[-1]) # Open or close the gripper
+            self.robot.set_target_pos(q_target_pos)
+        else:
+            self.robot.set_target_pos(action)
+            
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
 
@@ -72,7 +83,14 @@ class PickPlaceCubeEnv(gym.Env):
         # Return the next observation, reward, done flag, and additional info
         next_observation = np.concatenate([self.data.xpos.flatten(), self.target_pos])
         
-        return next_observation, reward, done, {}
+        # Check if the episode is timed out
+        info = {}
+        self.current_step += 1
+        if self.current_step >= self.max_episode_steps:
+            done = True
+            info['TimeLimit.truncated'] = True
+
+        return next_observation, reward, done, info
 
     def render(self):
         if not self.do_render:
