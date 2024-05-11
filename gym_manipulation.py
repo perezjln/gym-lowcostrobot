@@ -1,14 +1,14 @@
 
-from envs.ReachCubeEnv import ReachCubeEnv
+from envs.tasks.ReachCubeEnv import ReachCubeEnv
 
 def do_env_sim():
 
-    do_render = False
+    do_render = True
     env = ReachCubeEnv(render=do_render, max_episode_steps=200)
     env.reset()
 
     max_step = 1000000
-    for step in range(max_step):
+    for _ in range(max_step):
         action = env.action_space.sample()
         observation, reward, done, truncated, info = env.step(action)
 
@@ -17,9 +17,9 @@ def do_env_sim():
 
         if done:
             if not truncated:
-                print(f"Cube reached the target position at step: {step} with reward {reward}")
+                print(f"Cube reached the target position at step: {env.current_step} with reward {reward}")
             else:
-                print(f"Cube didn't reached the target position at step: {step} with reward {reward} but was truncated")
+                print(f"Cube didn't reached the target position at step: {env.current_step} with reward {reward} but was truncated")
             env.reset()
 
         if do_render:

@@ -3,7 +3,7 @@ from stable_baselines3 import TD3, PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
 
-from envs.ReachCubeEnv import ReachCubeEnv
+from envs.tasks.ReachCubeEnv import ReachCubeEnv
 
 def do_td3():
 
@@ -12,7 +12,7 @@ def do_td3():
 
     # Define and train the TD3 agent
     model = TD3("MlpPolicy", env, verbose=1)
-    model.learn(total_timesteps=int(1e5))
+    model.learn(total_timesteps=int(1e5), tb_log_name="td3_reach_cube")
 
     # Evaluate the agent
     mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10)
@@ -27,7 +27,7 @@ def do_ppo():
 
     # Define and train the TD3 agent
     model = PPO("MlpPolicy", envs, verbose=1)
-    model.learn(total_timesteps=int(1e5))
+    model.learn(total_timesteps=int(1e5), tb_log_name="ppo_reach_cube")
 
     # Evaluate the agent
     env = ReachCubeEnv(render=do_render, max_episode_steps=200)
@@ -36,4 +36,4 @@ def do_ppo():
 
 
 if __name__ == '__main__':
-    do_ppo()
+    do_td3()

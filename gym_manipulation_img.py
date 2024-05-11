@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-from envs.ReachCubeEnv import ReachCubeEnv
+from envs.tasks.ReachCubeEnv import ReachCubeEnv
 
 def do_env_sim_image():
 

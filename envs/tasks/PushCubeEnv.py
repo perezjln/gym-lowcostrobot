@@ -8,7 +8,7 @@ import gymnasium as gym
 from gymnasium import spaces
 
 from envs.SimulatedRobot import SimulatedRobot
-
+from envs.Rewards import proximity_reward
 
 class PushCubeEnv(gym.Env):
 
@@ -63,7 +63,7 @@ class PushCubeEnv(gym.Env):
     def reward(self):
         cube_id = self.model.body("box").id
         cube_pos = self.data.geom_xpos[cube_id]
-        return np.linalg.norm(cube_pos - self.target_pos)
+        return proximity_reward(cube_pos, self.target_pos)
 
     def step(self, action):
 
