@@ -1,16 +1,12 @@
 import time
-import numpy as np
-
 import mujoco
 import mujoco.viewer
 
-from envs.SimulatedRobot import SimulatedRobot
 
 def do_interactive_sim():
 
     m = mujoco.MjModel.from_xml_path('low_cost_robot/scene_one_cube.xml')
     data = mujoco.MjData(m)
-    robot = SimulatedRobot(m, data)
 
     with mujoco.viewer.launch_passive(m, data) as viewer:
 
