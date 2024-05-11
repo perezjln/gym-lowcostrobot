@@ -84,12 +84,14 @@ class PushCubeEnv(gym.Env):
         
         # Check if the episode is timed out
         info = {}
+        truncated = False
         self.current_step += 1
         if self.current_step >= self.max_episode_steps:
             done = True
+            truncated = True
             info['TimeLimit.truncated'] = True
 
-        return next_observation, reward, done, info
+        return next_observation, reward, done, truncated, info
 
     def render(self):
         if not self.do_render:
