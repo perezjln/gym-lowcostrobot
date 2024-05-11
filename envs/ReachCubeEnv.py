@@ -119,34 +119,3 @@ class ReachCubeEnv(gym.Env):
         if time_until_next_step > 0:
             time.sleep(time_until_next_step)
         self.step_start = time.time()
-
-
-def do_env_sim():
-    
-    import matplotlib.pyplot as plt
-
-    do_log = False
-    env = ReachCubeEnv(render=False, image_state=True)
-    env.reset()
-
-    max_step = 1000
-    for _ in range(max_step):
-        action = env.action_space.sample()
-        observation, reward, done, info = env.step(action)
-
-        plt.imshow(info["img"]) 
-        plt.show()
-
-        if do_log:
-            print("Observation:", observation)
-            print("Reward:", reward)
-
-        if done:
-            print("Cube reached the target position")
-            env.reset()
-
-        env.render()
-
-
-if __name__ == '__main__':
-    do_env_sim()
