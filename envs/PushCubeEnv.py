@@ -40,7 +40,7 @@ class PushCubeEnv(gym.Env):
         self.target_pos = np.array([np.random.rand(), np.random.rand(), 0.1])
         self.threshold_distance = 0.26
 
-    def reset(self):
+    def reset(self, seed=42):
 
         self.data.joint("red_box_joint").qpos[:3] = [np.random.rand()*0.2, np.random.rand()*0.2, 0.01]
         mujoco.mj_step(self.model, self.data)
@@ -48,7 +48,7 @@ class PushCubeEnv(gym.Env):
         self.target_pos = np.array([np.random.rand()*0.2, np.random.rand()*0.2, 0.01])
         self.step_start = time.time()
         self.current_step = 0
-        return np.concatenate([self.data.xpos.flatten(), self.target_pos])
+        return np.concatenate([self.data.xpos.flatten(), self.target_pos]), {}
 
     def reward(self):
         cube_id = self.model.body("box").id

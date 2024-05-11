@@ -41,7 +41,7 @@ class StackEnv(gym.Env):
         self.target_pos = np.array([np.random.rand(), np.random.rand(), 0.1])
         self.threshold_distance = 0.05
 
-    def reset(self):
+    def reset(self, seed=42):
 
         self.data.joint("red_box_joint").qpos[:3] = [np.random.rand()*0.2, np.random.rand()*0.2, 0.01]
         self.data.joint("blue_box_joint").qpos[:3] = [np.random.rand()*0.2, np.random.rand()*0.2, 0.01]
@@ -50,7 +50,7 @@ class StackEnv(gym.Env):
 
         self.current_step = 0
         self.step_start = time.time()
-        return np.concatenate([self.data.xpos.flatten()])
+        return np.concatenate([self.data.xpos.flatten()]), {}
 
     def reward(self):
         cube1_id = self.model.body("box1").id

@@ -44,7 +44,7 @@ class ReachCubeEnv(gym.Env):
         # Initialize the robot and target positions
         self.threshold_distance = 0.01
 
-    def reset(self):
+    def reset(self, seed=42):
         self.step_start = time.time()
 
         self.data.joint("red_box_joint").qpos[:3] = [np.random.rand()*0.2, np.random.rand()*0.2, 0.01]
@@ -52,7 +52,7 @@ class ReachCubeEnv(gym.Env):
 
         box_id = self.model.body("box").id
         self.current_step = 0
-        return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]])
+        return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]]), {}
 
     def reward(self):
         cube_id = self.model.body("box").id
