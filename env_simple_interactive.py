@@ -4,7 +4,7 @@ import numpy as np
 import mujoco
 import mujoco.viewer
 
-from envs.interface import SimulatedRobot
+from envs.SimulatedRobot import SimulatedRobot
 
 def do_interactive_sim():
 

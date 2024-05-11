@@ -2,7 +2,7 @@ import time
 import mujoco
 import mujoco.viewer
 
-from envs.interface import SimulatedRobot
+from envs.SimulatedRobot import SimulatedRobot
 
 
 if __name__ == '__main__':

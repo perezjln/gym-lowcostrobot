@@ -7,12 +7,12 @@ import mujoco.viewer
 import gymnasium as gym
 from gymnasium import spaces
 
-from envs.interface import SimulatedRobot
+from envs.SimulatedRobot import SimulatedRobot
 
 
 class LiftCubeEnv(gym.Env):
 
-    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, action_mode='joint', max_episode_steps=200):
+    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, action_mode='joint', max_episode_steps=200):
         super(LiftCubeEnv, self).__init__()
 
         # Load the MuJoCo model and data
@@ -27,6 +27,10 @@ class LiftCubeEnv(gym.Env):
         if self.do_render:
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
             self.step_start = time.time()
+
+        self.image_state = image_state
+        if self.image_state:
+            self.renderer = mujoco.Renderer(self.model)
 
         # Define the action space and observation space
         self.action_mode = action_mode
@@ -45,7 +49,13 @@ class LiftCubeEnv(gym.Env):
         mujoco.mj_step(self.model, self.data)
         self.step_start = time.time()
         self.current_step = 0
-        return np.concatenate([self.data.xpos.flatten(), self.target_pos]), {}
+
+        if self.image_state:
+            self.renderer.update_scene(self.data)
+            img = self.renderer.render()
+        info = {"img": img} if self.image_state else {}
+
+        return np.concatenate([self.data.xpos.flatten(), self.target_pos]), info
 
     def reward(self):
         cube_id = self.model.body("box").id
@@ -79,8 +89,12 @@ class LiftCubeEnv(gym.Env):
         # Return the next observation, reward, done flag, and additional info
         next_observation = np.concatenate([self.data.xpos.flatten()])
         
+        if self.image_state:
+            self.renderer.update_scene(self.data)
+            img = self.renderer.render()
+
         # Check if the episode is timed out
-        info = {}
+        info = {"img": img} if self.image_state else {}
         truncated = False
         self.current_step += 1
         if self.current_step >= self.max_episode_steps:

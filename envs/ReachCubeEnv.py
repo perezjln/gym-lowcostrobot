@@ -7,7 +7,7 @@ import mujoco.viewer
 import gymnasium as gym
 from gymnasium import spaces
 
-from envs.interface import SimulatedRobot
+from envs.SimulatedRobot import SimulatedRobot
 
 
 class ReachCubeEnv(gym.Env):
@@ -52,7 +52,13 @@ class ReachCubeEnv(gym.Env):
 
         box_id = self.model.body("box").id
         self.current_step = 0
-        return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]]), {}
+
+        if self.image_state:
+            self.renderer.update_scene(self.data)
+            img = self.renderer.render()
+        info = {"img": img} if self.image_state else {}
+
+        return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]]), info
 
     def reward(self):
         cube_id = self.model.body("box").id
@@ -78,10 +84,6 @@ class ReachCubeEnv(gym.Env):
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
 
-        if self.image_state:
-            self.renderer.update_scene(self.data)
-            img = self.renderer.render()
-
         # Compute the reward based on the distance
         distance = self.reward()
         reward   = -distance
@@ -93,7 +95,11 @@ class ReachCubeEnv(gym.Env):
         cube_id = self.model.body("box").id
         cube_pos = self.data.geom_xpos[cube_id]
         next_observation = np.concatenate([self.data.xpos.flatten(), cube_pos])
-        
+
+        if self.image_state:
+            self.renderer.update_scene(self.data)
+            img = self.renderer.render()
+
         # Check if the episode is timed out
         info = {"img": img} if self.image_state else {}
         truncated = False
