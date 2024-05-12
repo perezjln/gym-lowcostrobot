@@ -1,4 +1,4 @@
-# envs-lowcostrobot
+# gym-lowcostrobot
 
 This repository contains the code for gymnasium environments for the lowcostrobot project.
 https://github.com/AlexanderKoch-Koch/low_cost_robot/tree/main
