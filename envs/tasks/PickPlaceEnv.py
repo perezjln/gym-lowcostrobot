@@ -71,7 +71,7 @@ class PickPlaceCubeEnv(gym.Env):
         if self.action_mode == 'ee':
             # Update the robot position based on the action
             ee_id = self.model.body("joint5-pad").id
-            ee_target_pos = self.data.xpos[ee_id] + action
+            ee_target_pos = self.data.xpos[ee_id] + action[:3]
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
             q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")

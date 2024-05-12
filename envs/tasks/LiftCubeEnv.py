@@ -54,7 +54,7 @@ class LiftCubeEnv(gym.Env):
             img = self.renderer.render()
         info = {"img": img} if self.image_state else {}
 
-        return np.concatenate([self.data.xpos.flatten(), self.target_pos]), info
+        return np.concatenate([self.data.xpos.flatten()]), info
 
     def reward(self):
         cube_id = self.model.body("box").id
@@ -66,7 +66,7 @@ class LiftCubeEnv(gym.Env):
         if self.action_mode == 'ee':
             # Update the robot position based on the action
             ee_id = self.model.body("joint5-pad").id
-            ee_target_pos = self.data.xpos[ee_id] + action
+            ee_target_pos = self.data.xpos[ee_id] + action[:3]
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
             q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
