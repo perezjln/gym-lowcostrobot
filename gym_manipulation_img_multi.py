@@ -12,9 +12,6 @@ def do_env_sim_image():
         action = env.action_space.sample()
         _, _, done, _, info = env.step(action)
 
-        dict_imgs = env.get_camera_images()
-
-
         for key, img in info["dict_imgs"].items():
             print(key)
             plt.imshow(img)
