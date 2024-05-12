@@ -11,7 +11,7 @@ from envs.SimulatedRobot import SimulatedRobot
 
 class LiftCubeEnv(gym.Env):
 
-    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, action_mode='joint', max_episode_steps=200):
+    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, multi_image_state=False, action_mode='joint', max_episode_steps=200):
         super(LiftCubeEnv, self).__init__()
 
         # Load the MuJoCo model and data
@@ -28,7 +28,8 @@ class LiftCubeEnv(gym.Env):
             self.step_start = time.time()
 
         self.image_state = image_state
-        if self.image_state:
+        self.multi_image_state = multi_image_state
+        if self.image_state or self.multi_image_state:
             self.renderer = mujoco.Renderer(self.model)
 
         # Define the action space and observation space
@@ -101,7 +102,20 @@ class LiftCubeEnv(gym.Env):
             truncated = True
             info['TimeLimit.truncated'] = True
 
+        # Render the simulation in multiview
+        if self.multi_image_state:
+            dict_imgs = self.get_camera_images()
+            info["dict_imgs"] = dict_imgs
+            
         return next_observation, high, done, truncated, info
+
+    def get_camera_images(self):
+        dict_cams = {}
+        for cam_ids in ["camera_left", "camera_right", "camera_top"]:
+            self.renderer.update_scene(self.data, camera=cam_ids)
+            img = self.renderer.render()
+            dict_cams[cam_ids] = img
+        return dict_cams
 
     def render(self):
         if not self.do_render:
