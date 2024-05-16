@@ -12,7 +12,7 @@ from envs.Rewards import proximity_reward
 
 class BaseEnv(gym.Env):
 
-    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, action_mode='joint', max_episode_steps=200):
+    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, action_mode='joint', multi_image_state=False, max_episode_steps=200):
         super(BaseEnv, self).__init__()
 
          # Load the MuJoCo model and data
@@ -28,6 +28,7 @@ class BaseEnv(gym.Env):
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
             self.step_start = time.time()
 
+        self.multi_image_state = multi_image_state
         self.image_state = image_state
         if self.image_state:
             self.renderer = mujoco.Renderer(self.model)
@@ -80,12 +81,20 @@ class BaseEnv(gym.Env):
             truncated = True
             info['TimeLimit.truncated'] = True
 
+        # Render the simulation in multiview
+        if self.multi_image_state:
+            dict_imgs = self.get_camera_images()
+            info["dict_imgs"] = dict_imgs
+
         return info, done, truncated
 
     def reset(self):
         pass
 
     def step(self, action):
+        pass
+
+    def current_state(self):
         pass
 
     def render(self):
@@ -96,3 +105,11 @@ class BaseEnv(gym.Env):
         if time_until_next_step > 0:
             time.sleep(time_until_next_step)
         self.step_start = time.time()
+    
+    def get_camera_images(self):
+        dict_cams = {}
+        for cam_ids in ["camera_left", "camera_right", "camera_top"]:
+            self.renderer.update_scene(self.data, camera=cam_ids)
+            img = self.renderer.render()
+            dict_cams[cam_ids] = img
+        return dict_cams

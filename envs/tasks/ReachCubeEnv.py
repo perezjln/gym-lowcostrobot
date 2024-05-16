@@ -7,15 +7,13 @@ import mujoco.viewer
 import gymnasium as gym
 from gymnasium import spaces
 
-from envs.SimulatedRobot import SimulatedRobot
 from envs.Rewards import proximity_reward
-
 from envs.tasks.BaseEnv import BaseEnv
 
 class ReachCubeEnv(BaseEnv):
 
-    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, action_mode='joint', max_episode_steps=200):
-        super(ReachCubeEnv, self).__init__()
+    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, multi_image_state=False, action_mode='joint', max_episode_steps=200):
+        super(ReachCubeEnv, self).__init__(xml_path=xml_path, render=render, image_state=image_state, multi_image_state=multi_image_state, action_mode=action_mode, max_episode_steps=max_episode_steps)
 
         # Define the action space and observation space
         self.action_mode = action_mode
@@ -23,7 +21,6 @@ class ReachCubeEnv(BaseEnv):
             self.action_space      = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
         else:
             self.action_space      = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
-
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.data.xpos.flatten().shape[0] + 3,), dtype=np.float32)
 
         # Initialize the robot and target positions
@@ -35,7 +32,6 @@ class ReachCubeEnv(BaseEnv):
         self.data.joint("red_box_joint").qpos[:3] = [np.random.rand()*0.2, np.random.rand()*0.2, 0.01]
         mujoco.mj_step(self.model, self.data)
 
-        box_id = self.model.body("box").id
         self.current_step = 0
 
         if self.image_state:
@@ -43,7 +39,7 @@ class ReachCubeEnv(BaseEnv):
             img = self.renderer.render()
         info = {"img": img} if self.image_state else {}
 
-        return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]]), info
+        return self.current_state(), info
 
     def reward(self):
         #cube_id = self.model.body("box").id
@@ -54,6 +50,10 @@ class ReachCubeEnv(BaseEnv):
         #ee_pos = self.data.geom_xpos[ee_id]
         ee_pos = self.data.joint("joint5").qpos[:3]
         return proximity_reward(cube_pos, ee_pos)
+
+    def current_state(self):
+        box_id = self.model.body("box").id
+        return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]])
 
     def step(self, action):
 
@@ -67,9 +67,7 @@ class ReachCubeEnv(BaseEnv):
         done = -distance < self.threshold_distance
 
         # Return the next observation, reward, done flag, and additional info
-        cube_id = self.model.body("box").id
-        cube_pos = self.data.geom_xpos[cube_id]
-        next_observation = np.concatenate([self.data.xpos.flatten(), cube_pos])
+        next_observation = self.current_state()
 
         # Check if the episode is timed out, fill info dictionary
         info, done, truncated = self.base_set_info(done)

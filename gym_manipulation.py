@@ -1,4 +1,9 @@
 
+
+from envs.tasks.LiftCubeEnv import LiftCubeEnv 
+from envs.tasks.PushCubeEnv import PushCubeEnv
+from envs.tasks.PickPlaceCubeEnv import PickPlaceCubeEnv
+from envs.tasks.PushCubeEnv import PushCubeEnv
 from envs.tasks.ReachCubeEnv import ReachCubeEnv
 
 def do_env_sim():
@@ -15,15 +20,15 @@ def do_env_sim():
         #print("Observation:", observation)
         #print("Reward:", reward)
 
+        if do_render:
+            env.render()
+
         if done:
             if not truncated:
                 print(f"Cube reached the target position at step: {env.current_step} with reward {reward}")
             else:
                 print(f"Cube didn't reached the target position at step: {env.current_step} with reward {reward} but was truncated")
             env.reset()
-
-        if do_render:
-            env.render()
 
 if __name__ == '__main__':
     do_env_sim()

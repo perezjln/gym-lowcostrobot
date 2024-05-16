@@ -7,30 +7,12 @@ import mujoco.viewer
 import gymnasium as gym
 from gymnasium import spaces
 
-from envs.SimulatedRobot import SimulatedRobot
+from envs.tasks.BaseEnv import BaseEnv
 
-class LiftCubeEnv(gym.Env):
+class LiftCubeEnv(BaseEnv):
 
     def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, multi_image_state=False, action_mode='joint', max_episode_steps=200):
-        super(LiftCubeEnv, self).__init__()
-
-        # Load the MuJoCo model and data
-        self.model  = mujoco.MjModel.from_xml_path(xml_path)
-        self.data   = mujoco.MjData(self.model)
-        self.robot  = SimulatedRobot(self.model, self.data)
-
-        self.current_step = 0
-        self.max_episode_steps = max_episode_steps
-
-        self.do_render = render
-        if self.do_render:
-            self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
-            self.step_start = time.time()
-
-        self.image_state = image_state
-        self.multi_image_state = multi_image_state
-        if self.image_state or self.multi_image_state:
-            self.renderer = mujoco.Renderer(self.model)
+        super(LiftCubeEnv, self).__init__(xml_path=xml_path, render=render, image_state=image_state, multi_image_state=multi_image_state, action_mode=action_mode, max_episode_steps=max_episode_steps)
 
         # Define the action space and observation space
         self.action_mode = action_mode
@@ -55,30 +37,20 @@ class LiftCubeEnv(gym.Env):
             img = self.renderer.render()
         info = {"img": img} if self.image_state else {}
 
-        return np.concatenate([self.data.xpos.flatten()]), info
+        return self.current_state(), info
 
     def reward(self):
         cube_id = self.model.body("box").id
         cube_pos = self.data.geom_xpos[cube_id]
         return cube_pos[-1]
 
+    def current_state(self):
+        return np.concatenate([self.data.xpos.flatten()])
+
     def step(self, action):
 
-        if self.action_mode == 'ee':
-            # Update the robot position based on the action
-            ee_id = self.model.body("joint5-pad").id
-            ee_target_pos = self.data.xpos[ee_id] + action[:3]
-
-            # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-            q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
-            q_target_pos[-1:] = np.sign(action[-1]) # Open or close the gripper
-            self.robot.set_target_pos(q_target_pos)
-        else:
-            # Update the joint position based on the action
-            self.robot.set_target_pos(action)
-
-        # Step the simulation forward
-        mujoco.mj_step(self.model, self.data)
+        # Perform the action and step the simulation
+        self.base_step_action_withgrasp(action)
 
         # Compute the reward based on the distance
         high = self.reward()
@@ -87,42 +59,10 @@ class LiftCubeEnv(gym.Env):
         done = high > self.threshold_distance
 
         # Return the next observation, reward, done flag, and additional info
-        next_observation = np.concatenate([self.data.xpos.flatten()])
+        next_observation = self.current_state()
         
-        if self.image_state:
-            self.renderer.update_scene(self.data)
-            img = self.renderer.render()
-
-        # Check if the episode is timed out
-        info = {"img": img} if self.image_state else {}
-        truncated = False
-        self.current_step += 1
-        if self.current_step >= self.max_episode_steps:
-            done = True
-            truncated = True
-            info['TimeLimit.truncated'] = True
-
-        # Render the simulation in multiview
-        if self.multi_image_state:
-            dict_imgs = self.get_camera_images()
-            info["dict_imgs"] = dict_imgs
+        # Check if the episode is timed out, fill info dictionary
+        info, done, truncated = self.base_set_info(done)
             
         return next_observation, high, done, truncated, info
-
-    def get_camera_images(self):
-        dict_cams = {}
-        for cam_ids in ["camera_left", "camera_right", "camera_top"]:
-            self.renderer.update_scene(self.data, camera=cam_ids)
-            img = self.renderer.render()
-            dict_cams[cam_ids] = img
-        return dict_cams
-
-    def render(self):
-        if not self.do_render:
-            return
-        self.viewer.sync()
-        time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
-        if time_until_next_step > 0:
-            time.sleep(time_until_next_step)
-        self.step_start = time.time()
 

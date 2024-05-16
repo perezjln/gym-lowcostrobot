@@ -7,30 +7,14 @@ import mujoco.viewer
 import gymnasium as gym
 from gymnasium import spaces
 
-from envs.SimulatedRobot import SimulatedRobot
 from envs.Rewards import proximity_reward
 
-class PushCubeEnv(gym.Env):
+from envs.tasks.BaseEnv import BaseEnv
 
-    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, action_mode='joint', max_episode_steps=200):
-        super(PushCubeEnv, self).__init__()
+class PushCubeEnv(BaseEnv):
 
-        # Load the MuJoCo model and data
-        self.model  = mujoco.MjModel.from_xml_path(xml_path)
-        self.data   = mujoco.MjData(self.model)
-        self.robot  = SimulatedRobot(self.model, self.data)
-
-        self.current_step = 0
-        self.max_episode_steps = max_episode_steps
-
-        self.do_render = render
-        if self.do_render:
-            self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
-            self.step_start = time.time()
-
-        self.image_state = image_state
-        if self.image_state:
-            self.renderer = mujoco.Renderer(self.model)
+    def __init__(self, xml_path='low_cost_robot/scene_one_cube.xml', render=False, image_state=False, multi_image_state=False, action_mode='joint', max_episode_steps=200):
+        super(PushCubeEnv, self).__init__(xml_path=xml_path, render=render, image_state=image_state, multi_image_state=multi_image_state, action_mode=action_mode, max_episode_steps=max_episode_steps)
 
         # Define the action space and observation space
         self.action_mode = action_mode
@@ -58,7 +42,10 @@ class PushCubeEnv(gym.Env):
             img = self.renderer.render()
         info = {"img": img} if self.image_state else {}
 
-        return np.concatenate([self.data.xpos.flatten(), self.target_pos]), info
+        return self.current_state(), info
+
+    def current_state(self):
+        return np.concatenate([self.data.xpos.flatten(), self.target_pos])
 
     def reward(self):
         cube_id = self.model.body("box").id
@@ -67,20 +54,8 @@ class PushCubeEnv(gym.Env):
 
     def step(self, action):
 
-        if self.action_mode == 'ee':
-            # Update the robot position based on the action
-            ee_id = self.model.body("joint5-pad").id
-            ee_target_pos = self.data.xpos[ee_id] + action[:3]
-
-            # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-            q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
-            q_target_pos[-1:] = 0.0 # Close the gripper
-            self.robot.set_target_pos(q_target_pos)
-        else:
-            self.robot.set_target_pos(action)
-
-        # Step the simulation forward
-        mujoco.mj_step(self.model, self.data)
+        # Perform the action and step the simulation
+        self.base_step_action_nograsp(action)
 
         # Compute the reward based on the distance
         distance = self.reward()
@@ -90,29 +65,9 @@ class PushCubeEnv(gym.Env):
         done = distance < self.threshold_distance
 
         # Return the next observation, reward, done flag, and additional info
-        next_observation = np.concatenate([self.data.xpos.flatten(), self.target_pos])
+        next_observation = self.current_state()
         
-        if self.image_state:
-            self.renderer.update_scene(self.data)
-            img = self.renderer.render()
-
-        # Check if the episode is timed out
-        info = {"img": img} if self.image_state else {}
-        truncated = False
-        self.current_step += 1
-        if self.current_step >= self.max_episode_steps:
-            done = True
-            truncated = True
-            info['TimeLimit.truncated'] = True
+        # Check if the episode is timed out, fill info dictionary
+        info, done, truncated = self.base_set_info(done)
 
         return next_observation, reward, done, truncated, info
-
-    def render(self):
-        if not self.do_render:
-            return
-        self.viewer.sync()
-        time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
-        if time_until_next_step > 0:
-            time.sleep(time_until_next_step)
-        self.step_start = time.time()
-
