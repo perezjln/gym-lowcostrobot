@@ -1,9 +1,8 @@
-
 import matplotlib.pyplot as plt
-from gym_lowcostrobot.tasks.reach_cube_env import ReachCubeEnv
+from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
+
 
 def do_env_sim_image():
-
     env = ReachCubeEnv(render=False, image_state=True)
     env.reset()
 
@@ -12,7 +11,7 @@ def do_env_sim_image():
         action = env.action_space.sample()
         _, _, done, _, info = env.step(action)
 
-        plt.imshow(info["img"]) 
+        plt.imshow(info["img"])
         plt.show()
 
         if done:
@@ -20,5 +19,6 @@ def do_env_sim_image():
 
         env.render()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     do_env_sim_image()

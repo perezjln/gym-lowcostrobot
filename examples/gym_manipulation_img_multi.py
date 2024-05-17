@@ -1,9 +1,8 @@
-
 import matplotlib.pyplot as plt
-from gym_lowcostrobot.tasks.lift_cube_env import LiftCubeEnv
+from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
+
 
 def do_env_sim_image():
-
     env = LiftCubeEnv(render=False, image_state=True)
     env.reset()
 
@@ -22,5 +21,6 @@ def do_env_sim_image():
 
         env.render()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     do_env_sim_image()

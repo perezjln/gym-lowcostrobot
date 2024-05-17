@@ -1,14 +1,13 @@
-
 from stable_baselines3 import TD3, PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import EvalCallback
 
-from gym_lowcostrobot.tasks.reach_cube_env import ReachCubeEnv
-from gym_lowcostrobot.tasks.lift_cube_env import LiftCubeEnv
+from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
+from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
+
 
 def do_td3_reach():
-
     do_render = False
     env = ReachCubeEnv(render=do_render, max_episode_steps=200)
 
@@ -22,10 +21,11 @@ def do_td3_reach():
 
 
 def do_ppo_reach():
-
     nb_parallel_env = 4
     do_render = False
-    envs = SubprocVecEnv([lambda: ReachCubeEnv(render=do_render, max_episode_steps=200) for _ in range(nb_parallel_env)])
+    envs = SubprocVecEnv(
+        [lambda: ReachCubeEnv(render=do_render, max_episode_steps=200) for _ in range(nb_parallel_env)]
+    )
 
     # Define and train the TD3 agent
     model = PPO("MlpPolicy", envs, verbose=1)
@@ -38,13 +38,14 @@ def do_ppo_reach():
 
 
 def do_td3_lift():
-
     do_render = False
     env = LiftCubeEnv(render=do_render, max_episode_steps=200, action_mode="ee")
 
     # Define the evaluation callback
     eval_env = LiftCubeEnv(render=do_render, max_episode_steps=200, action_mode="ee")
-    eval_callback = EvalCallback(eval_env, eval_freq=1000, n_eval_episodes=10, deterministic=True, callback_on_new_best=None)
+    eval_callback = EvalCallback(
+        eval_env, eval_freq=1000, n_eval_episodes=10, deterministic=True, callback_on_new_best=None
+    )
 
     # Define and train the TD3 agent
     model = TD3("MlpPolicy", env, verbose=1)
@@ -56,10 +57,14 @@ def do_td3_lift():
 
 
 def do_ppo_lift():
-
     do_render = False
     nb_parallel_env = 8
-    envs = SubprocVecEnv([lambda: LiftCubeEnv(render=do_render, max_episode_steps=200, action_mode="ee") for _ in range(nb_parallel_env)])
+    envs = SubprocVecEnv(
+        [
+            lambda: LiftCubeEnv(render=do_render, max_episode_steps=200, action_mode="ee")
+            for _ in range(nb_parallel_env)
+        ]
+    )
 
     # Define and train the TD3 agent
     model = PPO("MlpPolicy", envs, verbose=1)
@@ -71,5 +76,5 @@ def do_ppo_lift():
     print(f"Mean reward: {mean_reward} +/- {std_reward}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     do_td3_lift()
