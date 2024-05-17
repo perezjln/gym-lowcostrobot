@@ -12,12 +12,11 @@ from gym_lowcostrobot.envs.base_env import BaseEnv
 class LiftCubeEnv(BaseEnv):
     def __init__(
         self,
-        xml_path="low_cost_robot/scene_one_cube.xml",
+        xml_path="assets/scene_one_cube.xml",
         render=False,
         image_state=False,
         multi_image_state=False,
         action_mode="joint",
-        max_episode_steps=200,
     ):
         super().__init__(
             xml_path=xml_path,
@@ -25,12 +24,10 @@ class LiftCubeEnv(BaseEnv):
             image_state=image_state,
             multi_image_state=multi_image_state,
             action_mode=action_mode,
-            max_episode_steps=max_episode_steps,
         )
 
         # Define the action space and observation space
-        self.action_mode = action_mode
-        if action_mode == "ee":
+        if self.action_mode == "ee":
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3 + 1,), dtype=np.float32)
         else:
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
@@ -41,14 +38,17 @@ class LiftCubeEnv(BaseEnv):
             dtype=np.float32,
         )
 
-        # Initialize the robot and target positions
-        self.target_pos = np.array([np.random.rand(), np.random.rand(), 0.1])
         self.threshold_distance = 0.5
 
-    def reset(self, seed=42):
+    def reset(self, seed=None, options=None):
+        # We need the following line to seed self.np_random
+        super().reset(seed=seed)
+
+        # Sample the target position and set the robot position
+        self.target_pos = np.array([self.np_random.random(), self.np_random.random(), 0.1])
         self.data.joint("red_box_joint").qpos[:3] = [
-            np.random.rand() * 0.2,
-            np.random.rand() * 0.2,
+            self.np_random.random() * 0.2,
+            self.np_random.random() * 0.2,
             0.01,
         ]
         mujoco.mj_step(self.model, self.data)
@@ -68,7 +68,7 @@ class LiftCubeEnv(BaseEnv):
         return cube_pos[-1]
 
     def current_state(self):
-        return np.concatenate([self.data.xpos.flatten()])
+        return np.concatenate([self.data.xpos.flatten()], dtype=np.float32)
 
     def step(self, action):
         # Perform the action and step the simulation
@@ -78,12 +78,12 @@ class LiftCubeEnv(BaseEnv):
         high = self.reward()
 
         # Check if the target position is reached
-        done = high > self.threshold_distance
+        terminated = high > self.threshold_distance
 
-        # Return the next observation, reward, done flag, and additional info
+        # Return the next observation, reward, terminated flag, and additional info
         next_observation = self.current_state()
 
         # Check if the episode is timed out, fill info dictionary
-        info, done, truncated = self.get_info(done)
+        info = self.get_info()
 
-        return next_observation, high, done, truncated, info
+        return next_observation, high, terminated, False, info

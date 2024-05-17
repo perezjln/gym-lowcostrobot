@@ -8,7 +8,7 @@ from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
 def do_simple_invk():
-    m = mujoco.MjModel.from_xml_path("low_cost_robot/scene_one_cube.xml")
+    m = mujoco.MjModel.from_xml_path("assets/scene_one_cube.xml")
     data = mujoco.MjData(m)
     robot = SimulatedRobot(m, data)
 

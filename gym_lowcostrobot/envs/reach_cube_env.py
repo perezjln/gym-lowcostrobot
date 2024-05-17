@@ -13,12 +13,12 @@ from gym_lowcostrobot.envs.base_env import BaseEnv
 class ReachCubeEnv(BaseEnv):
     def __init__(
         self,
-        xml_path="low_cost_robot/scene_one_cube.xml",
+        xml_path="assets/scene_one_cube.xml",
         render=False,
         image_state=False,
         multi_image_state=False,
         action_mode="joint",
-        max_episode_steps=200,
+        render_mode=None,
     ):
         super().__init__(
             xml_path=xml_path,
@@ -26,12 +26,11 @@ class ReachCubeEnv(BaseEnv):
             image_state=image_state,
             multi_image_state=multi_image_state,
             action_mode=action_mode,
-            max_episode_steps=max_episode_steps,
+            render_mode=render_mode,
         )
 
         # Define the action space and observation space
-        self.action_mode = action_mode
-        if action_mode == "ee":
+        if self.action_mode == "ee":
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
         else:
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
@@ -45,12 +44,14 @@ class ReachCubeEnv(BaseEnv):
         # Initialize the robot and target positions
         self.threshold_distance = 0.01
 
-    def reset(self, seed=42):
+    def reset(self, seed=None, options=None):
+        # We need the following line to seed self.np_random
+        super().reset(seed=seed)
         self.step_start = time.time()
 
         self.data.joint("red_box_joint").qpos[:3] = [
-            np.random.rand() * 0.2,
-            np.random.rand() * 0.2,
+            self.np_random.random() * 0.2,
+            self.np_random.random() * 0.2,
             0.01,
         ]
         mujoco.mj_step(self.model, self.data)
@@ -76,7 +77,7 @@ class ReachCubeEnv(BaseEnv):
 
     def current_state(self):
         box_id = self.model.body("box").id
-        return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]])
+        return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]], dtype=np.float32)
 
     def step(self, action):
         # Perform the action and step the simulation
@@ -95,6 +96,6 @@ class ReachCubeEnv(BaseEnv):
         observation = self.current_state()
 
         # Check if the episode is timed out, fill info dictionary
-        info = self.get_info(terminated)
+        info = self.get_info()
 
         return observation, reward, terminated, False, info

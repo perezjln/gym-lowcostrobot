@@ -3,13 +3,13 @@ from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
 
 def do_env_sim():
     do_render = True
-    env = ReachCubeEnv(render=do_render, max_episode_steps=200)
+    env = ReachCubeEnv(render=do_render)
     env.reset()
 
     max_step = 1000000
     for _ in range(max_step):
         action = env.action_space.sample()
-        observation, reward, done, truncated, info = env.step(action)
+        observation, reward, terminated, truncated, info = env.step(action)
 
         # print("Observation:", observation)
         # print("Reward:", reward)
@@ -17,7 +17,7 @@ def do_env_sim():
         if do_render:
             env.render()
 
-        if done:
+        if terminated:
             if not truncated:
                 print(f"Cube reached the target position at step: {env.current_step} with reward {reward}")
             else:

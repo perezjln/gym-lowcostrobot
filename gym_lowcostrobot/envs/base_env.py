@@ -10,13 +10,16 @@ from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
 class BaseEnv(gym.Env):
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
+
     def __init__(
         self,
-        xml_path="low_cost_robot/scene_one_cube.xml",
+        xml_path,
         render=False,
         image_state=False,
         action_mode="joint",
         multi_image_state=False,
+        render_mode=None,
     ):
         super().__init__()
 
@@ -36,6 +39,11 @@ class BaseEnv(gym.Env):
         self.image_state = image_state
         if self.image_state:
             self.renderer = mujoco.Renderer(self.model)
+
+        assert render_mode is None or render_mode in self.metadata["render_modes"]
+        self.render_mode = render_mode
+
+        self.action_mode = action_mode
 
     def base_step_action_nograsp(self, action):
         if self.action_mode == "ee":
@@ -84,22 +92,14 @@ class BaseEnv(gym.Env):
 
         return info
 
-    def reset(self):
-        pass
-
-    def step(self, action):
-        pass
-
-    def current_state(self):
-        pass
-
     def render(self):
         if not self.do_render:
             return
         self.viewer.sync()
         time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
         if time_until_next_step > 0:
-            time.sleep(time_until_next_step)
+            # time.sleep(time_until_next_step)
+            ...
         self.step_start = time.time()
 
     def get_camera_images(self):
