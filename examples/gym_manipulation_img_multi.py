@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-from envs.tasks.LiftCubeEnv import LiftCubeEnv
+from gym_lowcostrobot.tasks.lift_cube_env import LiftCubeEnv
 
 def do_env_sim_image():
 

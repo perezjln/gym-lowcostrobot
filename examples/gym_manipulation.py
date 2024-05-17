@@ -1,10 +1,10 @@
 
 
-from envs.tasks.LiftCubeEnv import LiftCubeEnv 
-from envs.tasks.PushCubeEnv import PushCubeEnv
-from envs.tasks.PickPlaceCubeEnv import PickPlaceCubeEnv
-from envs.tasks.PushCubeEnv import PushCubeEnv
-from envs.tasks.ReachCubeEnv import ReachCubeEnv
+from gym_lowcostrobot.tasks.lift_cube_env import LiftCubeEnv 
+from gym_lowcostrobot.tasks.push_cube_env import PushCubeEnv
+from gym_lowcostrobot.tasks.pick_place_cube_env import PickPlaceCubeEnv
+from gym_lowcostrobot.tasks.push_cube_env import PushCubeEnv
+from gym_lowcostrobot.tasks.reach_cube_env import ReachCubeEnv
 
 def do_env_sim():
 

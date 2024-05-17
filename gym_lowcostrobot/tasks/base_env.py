@@ -5,10 +5,8 @@ import mujoco
 import mujoco.viewer
 
 import gymnasium as gym
-from gymnasium import spaces
 
-from envs.SimulatedRobot import SimulatedRobot
-from envs.Rewards import proximity_reward
+from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 class BaseEnv(gym.Env):
 

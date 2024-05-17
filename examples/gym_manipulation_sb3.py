@@ -4,8 +4,8 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import EvalCallback
 
-from envs.tasks.ReachCubeEnv import ReachCubeEnv
-from envs.tasks.LiftCubeEnv import LiftCubeEnv
+from gym_lowcostrobot.tasks.reach_cube_env import ReachCubeEnv
+from gym_lowcostrobot.tasks.lift_cube_env import LiftCubeEnv
 
 def do_td3_reach():
 

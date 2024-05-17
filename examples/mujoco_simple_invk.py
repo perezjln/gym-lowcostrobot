@@ -4,7 +4,7 @@ import numpy as np
 import mujoco
 import mujoco.viewer
 
-from envs.SimulatedRobot import SimulatedRobot
+from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 def do_simple_invk():
 
