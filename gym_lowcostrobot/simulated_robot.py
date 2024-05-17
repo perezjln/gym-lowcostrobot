@@ -16,7 +16,7 @@ class SimulatedRobot:
         :param pos: numpy array of joint positions in range [-pi, pi]
         :return: numpy array of pwm values in range [0, 4096]
         """
-        return (pos / 3.14 + 1.) * 4096
+        return (pos / 3.14 + 1.0) * 4096
 
     def _pwm2pos(self, pwm: np.ndarray) -> np.ndarray:
         """
@@ -52,7 +52,7 @@ class SimulatedRobot:
         """
         return self.d.qvel
 
-    def read_ee_pos(self, joint_name='end_effector'):
+    def read_ee_pos(self, joint_name="end_effector"):
         """
         :param joint_name: name of the end effector joint
         :return: numpy array of end effector position
@@ -60,7 +60,7 @@ class SimulatedRobot:
         joint_id = self.m.body(joint_name).id
         return self.d.geom_xpos[joint_id]
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name='end_effector'):
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="end_effector"):
         """
         :param ee_target_pos: numpy array of target end effector position
         :param joint_name: name of the end effector joint
