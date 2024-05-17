@@ -1,4 +1,4 @@
-from gym_lowcostrobot.tasks.reach_cube_env import ReachCubeEnv
+from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
 
 
 def do_env_sim():
