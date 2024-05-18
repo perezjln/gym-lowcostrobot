@@ -8,10 +8,10 @@ from gymnasium import spaces
 
 from gym_lowcostrobot.rewards import threshold_proximity_reward
 
-from gym_lowcostrobot.envs.base_env import BaseEnv
+from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 
 
-class StackEnv(BaseEnv):
+class StackEnv(BaseRobotEnv):
     def __init__(
         self,
         xml_path="assets/scene_two_cubes.xml",
@@ -60,8 +60,6 @@ class StackEnv(BaseEnv):
         ]
 
         mujoco.mj_step(self.model, self.data)
-
-        self.current_step = 0
         self.step_start = time.time()
 
         if self.image_state:
@@ -98,4 +96,4 @@ class StackEnv(BaseEnv):
         # Check if the episode is timed out, fill info dictionary
         info = self.get_info()
 
-        return next_observation, float(reward), terminated, truncated, info
+        return next_observation, float(reward), terminated, False, info

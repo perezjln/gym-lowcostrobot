@@ -6,10 +6,10 @@ import mujoco.viewer
 
 from gymnasium import spaces
 
-from gym_lowcostrobot.envs.base_env import BaseEnv
+from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 
 
-class LiftCubeEnv(BaseEnv):
+class LiftCubeEnv(BaseRobotEnv):
     def __init__(
         self,
         xml_path="assets/scene_one_cube.xml",
@@ -53,7 +53,6 @@ class LiftCubeEnv(BaseEnv):
         ]
         mujoco.mj_step(self.model, self.data)
         self.step_start = time.time()
-        self.current_step = 0
 
         if self.image_state:
             self.renderer.update_scene(self.data)

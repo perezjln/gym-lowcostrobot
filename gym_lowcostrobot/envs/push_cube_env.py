@@ -8,10 +8,10 @@ from gymnasium import spaces
 
 from gym_lowcostrobot.rewards import proximity_reward
 
-from gym_lowcostrobot.envs.base_env import BaseEnv
+from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 
 
-class PushCubeEnv(BaseEnv):
+class PushCubeEnv(BaseRobotEnv):
     def __init__(
         self,
         xml_path="assets/scene_one_cube.xml",
@@ -54,7 +54,6 @@ class PushCubeEnv(BaseEnv):
 
         self.target_pos = np.array([self.np_random.random() * 0.2, self.np_random.random() * 0.2, 0.01])
         self.step_start = time.time()
-        self.current_step = 0
 
         if self.image_state:
             self.renderer.update_scene(self.data)
@@ -88,4 +87,4 @@ class PushCubeEnv(BaseEnv):
         # Check if the episode is timed out, fill info dictionary
         info = self.get_info()
 
-        return next_observation, reward, terminated, truncated, info
+        return next_observation, reward, terminated, False, info

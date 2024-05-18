@@ -9,7 +9,7 @@ import gymnasium as gym
 from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
-class BaseEnv(gym.Env):
+class BaseRobotEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
     def __init__(
@@ -26,9 +26,6 @@ class BaseEnv(gym.Env):
         # Load the MuJoCo model and data
         self.model = mujoco.MjModel.from_xml_path(xml_path)
         self.data = mujoco.MjData(self.model)
-        self.robot = SimulatedRobot(self.model, self.data)
-
-        self.current_step = 0
 
         self.do_render = render
         if self.do_render:
@@ -45,6 +42,31 @@ class BaseEnv(gym.Env):
 
         self.action_mode = action_mode
 
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="end_effector"):
+        """
+        :param ee_target_pos: numpy array of target end effector position
+        :param joint_name: name of the end effector joint
+        """
+        joint_id = self.model.body(joint_name).id
+
+        # get the current end effector position
+        ee_pos = self.data.geom_xpos[joint_id]
+
+        # compute the jacobian
+        jac = np.zeros((3, self.model.nv))
+        mujoco.mj_jacBodyCom(self.model, self.data, jac, None, joint_id)
+
+        # compute target joint velocities
+        qpos = self.data.qpos[:5]
+        qdot = np.dot(np.linalg.pinv(jac[:, :5]), ee_target_pos - ee_pos)
+
+        # apply the joint velocities
+        q_target_pos = qpos + qdot * step
+        return q_target_pos
+
+    def set_target_pos(self, target_pos):
+        self.data.ctrl = target_pos
+
     def base_step_action_nograsp(self, action):
         if self.action_mode == "ee":
             # Update the robot position based on the action
@@ -54,9 +76,9 @@ class BaseEnv(gym.Env):
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
             q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
             q_target_pos[-1:] = 0.0  # Close the gripper
-            self.robot.set_target_pos(q_target_pos)
+            self.set_target_pos(q_target_pos)
         else:
-            self.robot.set_target_pos(action)
+            self.set_target_pos(action)
 
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
@@ -70,9 +92,9 @@ class BaseEnv(gym.Env):
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
             q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
             q_target_pos[-1:] = np.sign(action[-1])  # Open or close the gripper
-            self.robot.set_target_pos(q_target_pos)
+            self.set_target_pos(q_target_pos)
         else:
-            self.robot.set_target_pos(action)
+            self.set_target_pos(action)
 
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
