@@ -12,16 +12,10 @@ from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 
 class ReachCubeEnv(BaseRobotEnv):
     def __init__(
-        self,
-        xml_path="assets/scene_one_cube.xml",
-        render=False,
-        image_state=False,
-        multi_image_state=False,
-        action_mode="joint",
-        render_mode=None,
+        self, render=False, image_state=False, multi_image_state=False, action_mode="joint", render_mode=None
     ):
         super().__init__(
-            xml_path=xml_path,
+            xml_path="assets/scene_one_cube.xml",
             render=render,
             image_state=image_state,
             multi_image_state=multi_image_state,
@@ -44,24 +38,25 @@ class ReachCubeEnv(BaseRobotEnv):
         # Initialize the robot and target positions
         self.threshold_distance = 0.01
 
+        self.object_low = np.array([0.0, 0.0, 0.01])
+        self.object_high = np.array([0.2, 0.2, 0.01])
+
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
-        super().reset(seed=seed)
-        self.step_start = time.time()
+        super().reset(seed=seed, options=options)
 
-        self.data.joint("red_box_joint").qpos[:3] = [
-            self.np_random.random() * 0.2,
-            self.np_random.random() * 0.2,
-            0.01,
-        ]
+        # Sample the target position and set the robot position
+        self.data.joint("red_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
+
         mujoco.mj_step(self.model, self.data)
+        self.step_start = time.time()
 
         if self.image_state:
             self.renderer.update_scene(self.data)
             img = self.renderer.render()
         info = {"img": img} if self.image_state else {}
 
-        return self.current_state(), info
+        return self.get_observation(), info
 
     def reward(self):
         # cube_id = self.model.body("box").id
@@ -73,7 +68,7 @@ class ReachCubeEnv(BaseRobotEnv):
         ee_pos = self.data.joint("joint5").qpos[:3]
         return proximity_reward(cube_pos, ee_pos)
 
-    def current_state(self):
+    def get_observation(self):
         box_id = self.model.body("box").id
         return np.concatenate([self.data.xpos.flatten(), self.data.xpos[box_id]], dtype=np.float32)
 
@@ -91,7 +86,7 @@ class ReachCubeEnv(BaseRobotEnv):
         reward = -distance
 
         # Get the new observation
-        observation = self.current_state()
+        observation = self.get_observation()
 
         # Check if the episode is timed out, fill info dictionary
         info = self.get_info()

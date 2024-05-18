@@ -115,14 +115,12 @@ class BaseRobotEnv(gym.Env):
         return info
 
     def render(self):
-        if not self.do_render:
-            return
-        self.viewer.sync()
-        time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
-        if time_until_next_step > 0:
-            # time.sleep(time_until_next_step)
-            ...
-        self.step_start = time.time()
+        if self.do_render:
+            self.viewer.sync()
+            time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
+            if time_until_next_step > 0:
+                time.sleep(time_until_next_step)
+            self.step_start = time.time()
 
     def get_camera_images(self):
         dict_cams = {}

@@ -12,7 +12,7 @@ def progressive_proximity_reward(old_pos_current, old_pos_target, pos_current, p
 
 def threshold_proximity_reward(pos_current, pos_target, distance_threshold):
     distance = np.linalg.norm(pos_current - pos_target)
-    return 1 if distance < distance_threshold else 0
+    return 1.0 if distance < distance_threshold else 0.0
 
 
 ### Joint space rewards
