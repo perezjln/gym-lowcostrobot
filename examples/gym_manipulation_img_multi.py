@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
 
 

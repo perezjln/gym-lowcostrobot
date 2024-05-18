@@ -1,9 +1,8 @@
 import time
-import numpy as np
 
 import mujoco
 import mujoco.viewer
-
+import numpy as np
 from gymnasium import spaces
 
 from gym_lowcostrobot.envs.base_env import BaseRobotEnv

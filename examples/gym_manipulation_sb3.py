@@ -1,10 +1,10 @@
-from stable_baselines3 import TD3, PPO
-from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3 import PPO, TD3
 from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.vec_env import SubprocVecEnv
 
-from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
 from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
+from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
 
 
 def do_td3_reach():

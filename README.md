@@ -28,4 +28,5 @@ pytest
 ```
 pip install ruff
 ruff format gym_lowcostrobot examples tests setup.py --line-length 119
+isort -l 119 .
 ```
