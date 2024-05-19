@@ -15,17 +15,15 @@ class StackEnv(BaseEnv):
     def __init__(
         self,
         xml_path="assets/scene_two_cubes.xml",
-        render=False,
-        image_state=False,
-        multi_image_state=False,
+        image_state=None,
         action_mode="joint",
+        render_mode=None
     ):
         super().__init__(
             xml_path=xml_path,
-            render=render,
             image_state=image_state,
-            multi_image_state=multi_image_state,
             action_mode=action_mode,
+            render_mode=render_mode
         )
 
         # Define the action space and observation space
@@ -64,10 +62,7 @@ class StackEnv(BaseEnv):
         self.current_step = 0
         self.step_start = time.time()
 
-        if self.image_state:
-            self.renderer.update_scene(self.data)
-            img = self.renderer.render()
-        info = {"img": img} if self.image_state else {}
+        info = self.get_info()
 
         return np.concatenate([self.data.xpos.flatten()], dtype=np.float32), info
 
@@ -98,4 +93,4 @@ class StackEnv(BaseEnv):
         # Check if the episode is timed out, fill info dictionary
         info = self.get_info()
 
-        return next_observation, float(reward), terminated, truncated, info
+        return next_observation, float(reward), terminated, False, info

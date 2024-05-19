@@ -15,17 +15,15 @@ class PickPlaceCubeEnv(BaseEnv):
     def __init__(
         self,
         xml_path="assets/scene_one_cube.xml",
-        render=False,
-        image_state=False,
-        multi_image_state=False,
+        image_state=None,
         action_mode="joint",
+        render_mode=None
     ):
         super().__init__(
             xml_path=xml_path,
-            render=render,
             image_state=image_state,
-            multi_image_state=multi_image_state,
             action_mode=action_mode,
+            render_mode=render_mode
         )
 
         # Define the action space and observation space
@@ -58,11 +56,8 @@ class PickPlaceCubeEnv(BaseEnv):
 
         self.step_start = time.time()
         self.current_step = 0
-
-        if self.image_state:
-            self.renderer.update_scene(self.data)
-            img = self.renderer.render()
-        info = {"img": img} if self.image_state else {}
+        
+        info = self.get_info()
 
         return self.current_state(), info
 
