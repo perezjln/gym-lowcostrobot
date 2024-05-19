@@ -6,7 +6,6 @@ import numpy as np
 from gymnasium import spaces
 
 from gym_lowcostrobot.envs.base_env import BaseRobotEnv
-from gym_lowcostrobot.rewards import proximity_reward
 
 
 class PushCubeEnv(BaseRobotEnv):
@@ -41,16 +40,17 @@ class PushCubeEnv(BaseRobotEnv):
         # We need the following line to seed self.np_random
         super().reset(seed=seed, options=options)
 
-        # Sample the target position and set the robot position
+        # Sample the target position
         self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
 
-        # Set the object position
+        # Sample and set the object position
         self.data.joint("red_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
 
         # Step the simulation
         mujoco.mj_step(self.model, self.data)
         self.step_start = time.time()
 
+        # Get the additional info
         info = self.get_info()
 
         return self.get_observation(), info
@@ -58,26 +58,25 @@ class PushCubeEnv(BaseRobotEnv):
     def get_observation(self):
         return np.concatenate([self.data.xpos.flatten(), self.target_pos], dtype=np.float32)
 
-    def reward(self):
-        cube_id = self.model.body("box").id
-        cube_pos = self.data.geom_xpos[cube_id]
-        return proximity_reward(cube_pos, self.target_pos)
-
     def step(self, action):
         # Perform the action and step the simulation
         self.base_step_action_nograsp(action)
 
-        # Compute the reward based on the distance
-        distance = self.reward()
+        # Get the new observation
+        observation = self.get_observation()
+
+        # Compute the distance
+        cube_id = self.model.body("box").id
+        cube_pos = self.data.geom_xpos[cube_id]
+        distance = np.linalg.norm(cube_pos - self.target_pos)
+
+        # Compute the reward
         reward = -distance
 
         # Check if the target position is reached
         terminated = distance < self.threshold_distance
 
-        # Return the next observation, reward, terminated flag, and additional info
-        observation = self.get_observation()
-
-        # Check if the episode is timed out, fill info dictionary
+        # Get the additional info
         info = self.get_info()
 
         return observation, reward, terminated, False, info

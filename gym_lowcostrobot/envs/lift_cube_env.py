@@ -38,13 +38,14 @@ class LiftCubeEnv(BaseRobotEnv):
         # We need the following line to seed self.np_random
         super().reset(seed=seed, options=options)
 
-        # Set the object position
+        # Sample and set the object position
         self.data.joint("red_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
 
         # Step the simulation
         mujoco.mj_step(self.model, self.data)
         self.step_start = time.time()
 
+        # Get the additional info
         info = self.get_info()
 
         return self.get_observation(), info
@@ -56,7 +57,10 @@ class LiftCubeEnv(BaseRobotEnv):
         # Perform the action and step the simulation
         self.base_step_action_withgrasp(action)
 
-        # Compute the reward based on the distance
+        # Get the new observation
+        observation = self.get_observation()
+
+        # Compute the distance
         object_id = self.model.body("box").id
         object_pos = self.data.geom_xpos[object_id]
         object_z = object_pos[-1]
@@ -67,10 +71,7 @@ class LiftCubeEnv(BaseRobotEnv):
         # Check if the target position is reached
         terminated = object_z > self.threshold_distance
 
-        # Return the next observation, reward, terminated flag, and additional info
-        observation = self.get_observation()
-
-        # Check if the episode is timed out, fill info dictionary
+        # Get the additional info
         info = self.get_info()
 
         return observation, reward, terminated, False, info

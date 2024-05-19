@@ -8,16 +8,10 @@ import numpy as np
 from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
-class BaseEnv(gym.Env):
+class BaseRobotEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4, "image_state": ["single", "multi"]}
 
-    def __init__(
-        self,
-        xml_path,
-        image_state=None,
-        action_mode="joint",
-        render_mode=None,
-    ):
+    def __init__(self, xml_path, image_state=None, action_mode="joint", render_mode=None):
         super().__init__()
 
         # Load the MuJoCo model and data

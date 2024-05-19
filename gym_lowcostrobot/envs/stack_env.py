@@ -6,7 +6,6 @@ import numpy as np
 from gymnasium import spaces
 
 from gym_lowcostrobot.envs.base_env import BaseRobotEnv
-from gym_lowcostrobot.rewards import threshold_proximity_reward
 
 
 class StackEnv(BaseRobotEnv):
@@ -42,7 +41,7 @@ class StackEnv(BaseRobotEnv):
         # Sample the target position and set the robot position
         self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
 
-        # Set the object position
+        # Sample and set the objects positions
         self.data.joint("red_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
         self.data.joint("blue_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
 
@@ -50,6 +49,7 @@ class StackEnv(BaseRobotEnv):
         mujoco.mj_step(self.model, self.data)
         self.step_start = time.time()
 
+        # Get the additional info
         info = self.get_info()
 
         return self.get_observation(), info
@@ -61,18 +61,24 @@ class StackEnv(BaseRobotEnv):
         # Perform the action and step the simulation
         self.base_step_action_withgrasp(action)
 
-        # Compute the reward based on the distance
+        # Get the new observation
+        observation = self.get_observation()
+
+        # Check if the stack is successful
         cube1_id = self.model.body("box1").id
         cube1_pos = self.data.geom_xpos[cube1_id]
         cube2_id = self.model.body("box2").id
         cube2_pos = self.data.geom_xpos[cube2_id]
-
-        # Simplistic version of cube stacking reward
         is_2_above_1 = cube1_pos[2] < cube2_pos[2]
         is_2_close_to_1 = np.linalg.norm(cube1_pos[0:2] - cube2_pos[0:2]) < self.threshold_distance
         success = is_2_above_1 and is_2_close_to_1
+
+        # Compute the reward
         reward = 1.0 if success else 0.0
+
         terminated = success
-        observation = self.get_observation()
+
+        # Get the additional info
         info = self.get_info()
+
         return observation, reward, terminated, False, info

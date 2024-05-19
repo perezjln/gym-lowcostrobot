@@ -6,7 +6,6 @@ import numpy as np
 from gymnasium import spaces
 
 from gym_lowcostrobot.envs.base_env import BaseRobotEnv
-from gym_lowcostrobot.rewards import proximity_reward
 
 
 class ReachCubeEnv(BaseRobotEnv):
@@ -40,25 +39,17 @@ class ReachCubeEnv(BaseRobotEnv):
         # We need the following line to seed self.np_random
         super().reset(seed=seed, options=options)
 
-        # Sample the target position and set the robot position
+        # Sample and set the object position
         self.data.joint("red_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
 
+        # Step the simulation
         mujoco.mj_step(self.model, self.data)
         self.step_start = time.time()
 
+        # Get the additional info
         info = self.get_info()
 
         return self.get_observation(), info
-
-    def reward(self):
-        # cube_id = self.model.body("box").id
-        # cube_pos = self.data.geom_xpos[cube_id]
-        cube_pos = self.data.joint("red_box_joint").qpos[:3]
-
-        # ee_id = self.model.body("joint5-pad").id
-        # ee_pos = self.data.geom_xpos[ee_id]
-        ee_pos = self.data.joint("joint5").qpos[:3]
-        return proximity_reward(cube_pos, ee_pos)
 
     def get_observation(self):
         box_id = self.model.body("box").id
@@ -68,19 +59,24 @@ class ReachCubeEnv(BaseRobotEnv):
         # Perform the action and step the simulation
         self.base_step_action_nograsp(action)
 
-        # Compute the reward based on the distance
-        distance = -self.reward()
+        # Get the new observation
+        observation = self.get_observation()
 
-        # Check if the target position is reached
-        terminated = distance < self.threshold_distance
+        # cube_id = self.model.body("box").id
+        # cube_pos = self.data.geom_xpos[cube_id]
+        cube_pos = self.data.joint("red_box_joint").qpos[:3]
+        # ee_id = self.model.body("joint5-pad").id
+        # ee_pos = self.data.geom_xpos[ee_id]
+        ee_pos = self.data.joint("joint5").qpos[:3]
+        distance = np.linalg.norm(cube_pos - ee_pos)
 
         # Compute the reward based on the distance
         reward = -distance
 
-        # Get the new observation
-        observation = self.get_observation()
+        # The episode is terminated if the distance is less than the threshold
+        terminated = distance < self.threshold_distance
 
-        # Check if the episode is timed out, fill info dictionary
+        # Get the additional info
         info = self.get_info()
 
         return observation, reward, terminated, False, info
