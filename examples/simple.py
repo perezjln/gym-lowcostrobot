@@ -1,5 +1,6 @@
-import gym_lowcostrobot
 import gymnasium as gym
+
+import gym_lowcostrobot
 
 env = gym.make("ReachCube-v0")
 

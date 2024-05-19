@@ -1,34 +1,22 @@
 import time
-import numpy as np
-
-import mujoco
-import mujoco.viewer
 
 import gymnasium as gym
+import mujoco
+import mujoco.viewer
+import numpy as np
 
 from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
-class BaseEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array"], 
-                "render_fps": 4,
-                "image_state": ["single", "multi"]}
+class BaseRobotEnv(gym.Env):
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4, "image_state": ["single", "multi"]}
 
-    def __init__(
-        self,
-        xml_path,
-        image_state=None,
-        action_mode="joint",
-        render_mode=None,
-    ):
+    def __init__(self, xml_path, image_state=None, action_mode="joint", render_mode=None):
         super().__init__()
 
         # Load the MuJoCo model and data
         self.model = mujoco.MjModel.from_xml_path(xml_path)
         self.data = mujoco.MjData(self.model)
-        self.robot = SimulatedRobot(self.model, self.data)
-
-        self.current_step = 0
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
@@ -45,6 +33,31 @@ class BaseEnv(gym.Env):
 
         self.action_mode = action_mode
 
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="end_effector"):
+        """
+        :param ee_target_pos: numpy array of target end effector position
+        :param joint_name: name of the end effector joint
+        """
+        joint_id = self.model.body(joint_name).id
+
+        # get the current end effector position
+        ee_pos = self.data.geom_xpos[joint_id]
+
+        # compute the jacobian
+        jac = np.zeros((3, self.model.nv))
+        mujoco.mj_jacBodyCom(self.model, self.data, jac, None, joint_id)
+
+        # compute target joint velocities
+        qpos = self.data.qpos[:5]
+        qdot = np.dot(np.linalg.pinv(jac[:, :5]), ee_target_pos - ee_pos)
+
+        # apply the joint velocities
+        q_target_pos = qpos + qdot * step
+        return q_target_pos
+
+    def set_target_pos(self, target_pos):
+        self.data.ctrl = target_pos
+
     def get_actuator_ranges(self):
         return self.model.actuator_ctrlrange
 
@@ -57,9 +70,9 @@ class BaseEnv(gym.Env):
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
             q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
             q_target_pos[-1:] = 0.0  # Close the gripper
-            self.robot.set_target_pos(q_target_pos)
+            self.set_target_pos(q_target_pos)
         else:
-            self.robot.set_target_pos(action)
+            self.set_target_pos(action)
 
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
@@ -74,16 +87,15 @@ class BaseEnv(gym.Env):
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
             q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
             q_target_pos[-1:] = np.sign(action[-1])  # Open or close the gripper
-            self.robot.set_target_pos(q_target_pos)
+            self.set_target_pos(q_target_pos)
         else:
-            self.robot.set_target_pos(action)
+            self.set_target_pos(action)
 
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
         self.current_step += 1
 
     def get_info(self):
-
         if self.image_state == "single":
             self.renderer.update_scene(self.data)
             img = self.renderer.render()
@@ -102,14 +114,12 @@ class BaseEnv(gym.Env):
             self.model.opt.timestep = 1 / fps
 
     def render(self):
-        if not self.render_mode:
-            return
-        self.viewer.sync()
-        time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
-        if time_until_next_step > 0:
-            # time.sleep(time_until_next_step)
-            ...
-        self.step_start = time.time()
+        if self.render_mode is not None:
+            self.viewer.sync()
+            time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
+            if time_until_next_step > 0:
+                time.sleep(time_until_next_step)
+            self.step_start = time.time()
 
     def get_camera_images(self):
         dict_cams = {}

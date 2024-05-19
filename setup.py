@@ -1,6 +1,5 @@
 from setuptools import find_packages, setup
 
-
 setup(
     name="gym_lowcostrobot",
     version="0.0.1",

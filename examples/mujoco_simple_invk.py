@@ -1,8 +1,8 @@
 import time
-import numpy as np
 
 import mujoco
 import mujoco.viewer
+import numpy as np
 
 from gym_lowcostrobot.simulated_robot import SimulatedRobot
 

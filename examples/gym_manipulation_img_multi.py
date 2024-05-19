@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
 
 
@@ -20,6 +21,7 @@ def do_env_sim_image():
             env.reset()
 
         env.render()
+
 
 if __name__ == "__main__":
     do_env_sim_image()
