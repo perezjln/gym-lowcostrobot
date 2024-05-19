@@ -10,13 +10,12 @@ from gym_lowcostrobot.rewards import threshold_proximity_reward
 
 
 class StackEnv(BaseRobotEnv):
-    def __init__(self, render=False, image_state=False, multi_image_state=False, action_mode="joint"):
+    def __init__(self, image_state=None, action_mode="joint", render_mode=None):
         super().__init__(
             xml_path="assets/scene_two_cubes.xml",
-            render=render,
             image_state=image_state,
-            multi_image_state=multi_image_state,
             action_mode=action_mode,
+            render_mode=render_mode
         )
 
         # Define the action space and observation space
@@ -51,10 +50,7 @@ class StackEnv(BaseRobotEnv):
         mujoco.mj_step(self.model, self.data)
         self.step_start = time.time()
 
-        if self.image_state:
-            self.renderer.update_scene(self.data)
-            img = self.renderer.render()
-        info = {"img": img} if self.image_state else {}
+        info = self.get_info()
 
         return self.get_observation(), info
 

@@ -8,16 +8,16 @@ import numpy as np
 from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
-class BaseRobotEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
+class BaseEnv(gym.Env):
+    metadata = {"render_modes": ["human", "rgb_array"], 
+                "render_fps": 4,
+                "image_state": ["single", "multi"]}
 
     def __init__(
         self,
         xml_path,
-        render=False,
-        image_state=False,
+        image_state=None,
         action_mode="joint",
-        multi_image_state=False,
         render_mode=None,
     ):
         super().__init__()
@@ -26,18 +26,18 @@ class BaseRobotEnv(gym.Env):
         self.model = mujoco.MjModel.from_xml_path(xml_path)
         self.data = mujoco.MjData(self.model)
 
-        self.do_render = render
-        if self.do_render:
+        assert render_mode is None or render_mode in self.metadata["render_modes"]
+        self.render_mode = render_mode
+        if self.render_mode:
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
             self.step_start = time.time()
 
-        self.multi_image_state = multi_image_state
+        assert image_state is None or image_state in self.metadata["image_state"]
         self.image_state = image_state
         if self.image_state:
             self.renderer = mujoco.Renderer(self.model)
 
-        assert render_mode is None or render_mode in self.metadata["render_modes"]
-        self.render_mode = render_mode
+        self.set_fps(self.metadata["render_fps"])
 
         self.action_mode = action_mode
 
@@ -66,6 +66,9 @@ class BaseRobotEnv(gym.Env):
     def set_target_pos(self, target_pos):
         self.data.ctrl = target_pos
 
+    def get_actuator_ranges(self):
+        return self.model.actuator_ctrlrange
+
     def base_step_action_nograsp(self, action):
         if self.action_mode == "ee":
             # Update the robot position based on the action
@@ -81,6 +84,7 @@ class BaseRobotEnv(gym.Env):
 
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
+        self.current_step += 1
 
     def base_step_action_withgrasp(self, action):
         if self.action_mode == "ee":
@@ -97,24 +101,29 @@ class BaseRobotEnv(gym.Env):
 
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
+        self.current_step += 1
 
     def get_info(self):
-        if self.image_state:
+
+        if self.image_state == "single":
             self.renderer.update_scene(self.data)
             img = self.renderer.render()
-
-        # Check if the episode is timed out
-        info = {"img": img} if self.image_state else {}
-
-        # Render the simulation in multiview
-        if self.multi_image_state:
+            info = {"img": img}
+        elif self.image_state == "multi":
+            self.renderer.update_scene(self.data)
             dict_imgs = self.get_camera_images()
-            info["dict_imgs"] = dict_imgs
+            info = {"dict_imgs": dict_imgs}
+        else:
+            info = {}
 
         return info
 
+    def set_fps(self, fps):
+        if self.render_mode:
+            self.model.opt.timestep = 1 / fps
+
     def render(self):
-        if self.do_render:
+        if self.render_mode is not None:
             self.viewer.sync()
             time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
             if time_until_next_step > 0:
