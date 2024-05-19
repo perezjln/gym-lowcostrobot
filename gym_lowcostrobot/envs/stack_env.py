@@ -39,14 +39,15 @@ class StackEnv(BaseRobotEnv):
         super().reset(seed=seed, options=options)
 
         # Sample the target position and set the robot position
-        self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
+        #self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
 
         # Sample and set the objects positions
         self.data.joint("red_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
         self.data.joint("blue_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
 
         # Step the simulation
-        mujoco.mj_step(self.model, self.data)
+        #mujoco.mj_step(self.model, self.data)
+        mujoco.mj_forward(self.model, self.data)
         self.step_start = time.time()
 
         # Get the additional info
