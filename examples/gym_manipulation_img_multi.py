@@ -3,7 +3,7 @@ from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
 
 
 def do_env_sim_image():
-    env = LiftCubeEnv(render=False, image_state=True)
+    env = LiftCubeEnv(render_mode=None, image_state="multi")
     env.reset()
 
     max_step = 1000
@@ -20,7 +20,6 @@ def do_env_sim_image():
             env.reset()
 
         env.render()
-
 
 if __name__ == "__main__":
     do_env_sim_image()

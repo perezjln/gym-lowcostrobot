@@ -41,6 +41,8 @@ class BaseEnv(gym.Env):
         if self.image_state:
             self.renderer = mujoco.Renderer(self.model)
 
+        self.set_fps(self.metadata["render_fps"])
+
         self.action_mode = action_mode
 
     def base_step_action_nograsp(self, action):
@@ -91,6 +93,10 @@ class BaseEnv(gym.Env):
             info = {}
 
         return info
+
+    def set_fps(self, fps):
+        if self.render_mode:
+            self.model.opt.timestep = 1 / fps
 
     def render(self):
         if not self.render_mode:

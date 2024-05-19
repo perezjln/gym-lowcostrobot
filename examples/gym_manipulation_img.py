@@ -3,7 +3,7 @@ from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
 
 
 def do_env_sim_image():
-    env = ReachCubeEnv(render=False, image_state=True)
+    env = ReachCubeEnv(render_mode=None, image_state="single")
     env.reset()
 
     max_step = 1000
