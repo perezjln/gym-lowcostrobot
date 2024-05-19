@@ -9,7 +9,11 @@ from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 
 
 class ReachCubeEnv(BaseRobotEnv):
-    def __init__(self, image_state=None, action_mode="joint", render_mode=None):
+    def __init__(self,
+                 image_state=None, 
+                 action_mode="joint", 
+                 render_mode=None,
+                 obj_xy_range=0.15):
         super().__init__(
             xml_path="assets/scene_one_cube.xml",
             image_state=image_state,
@@ -31,9 +35,7 @@ class ReachCubeEnv(BaseRobotEnv):
 
         # Initialize the robot and target positions
         self.threshold_distance = 0.01
-
-        self.object_low = np.array([0.0, 0.0, 0.01])
-        self.object_high = np.array([0.2, 0.2, 0.01])
+        self.set_object_range(obj_xy_range)
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
