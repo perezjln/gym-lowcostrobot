@@ -75,9 +75,9 @@ class PushCubeEnv(BaseRobotEnv):
         terminated = distance < self.threshold_distance
 
         # Return the next observation, reward, terminated flag, and additional info
-        next_observation = self.get_observation()
+        observation = self.get_observation()
 
         # Check if the episode is timed out, fill info dictionary
         info = self.get_info()
 
-        return next_observation, reward, terminated, False, info
+        return observation, reward, terminated, False, info
