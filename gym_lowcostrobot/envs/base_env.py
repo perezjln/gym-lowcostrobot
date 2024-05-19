@@ -32,6 +32,7 @@ class BaseRobotEnv(gym.Env):
         self.set_fps(self.metadata["render_fps"])
 
         self.action_mode = action_mode
+        self.current_step = 0
 
     def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="end_effector"):
         """
