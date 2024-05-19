@@ -1,8 +1,8 @@
-from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
+from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
 
 
 def do_env_sim():
-    env = LiftCubeEnv(render_mode="human", action_mode="ee")
+    env = ReachCubeEnv(render_mode="human", action_mode="joint")
     env.reset()
 
     max_step = 1000000

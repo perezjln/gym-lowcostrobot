@@ -45,6 +45,9 @@ class BaseEnv(gym.Env):
 
         self.action_mode = action_mode
 
+    def get_actuator_ranges(self):
+        return self.model.actuator_ctrlrange
+
     def base_step_action_nograsp(self, action):
         if self.action_mode == "ee":
             # Update the robot position based on the action
