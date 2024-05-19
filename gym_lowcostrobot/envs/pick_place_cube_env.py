@@ -15,7 +15,7 @@ class PickPlaceCubeEnv(BaseRobotEnv):
             xml_path="assets/scene_one_cube.xml",
             image_state=image_state,
             action_mode=action_mode,
-            render_mode=render_mode
+            render_mode=render_mode,
         )
 
         # Define the action space and observation space
@@ -52,9 +52,8 @@ class PickPlaceCubeEnv(BaseRobotEnv):
         self.step_start = time.time()
 
         self.current_step = 0
-        
-        info = self.get_info()
 
+        info = self.get_info()
 
         return self.get_observation(), info
 

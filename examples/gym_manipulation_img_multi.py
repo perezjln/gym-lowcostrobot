@@ -22,5 +22,6 @@ def do_env_sim_image():
 
         env.render()
 
+
 if __name__ == "__main__":
     do_env_sim_image()

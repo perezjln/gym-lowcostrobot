@@ -15,7 +15,7 @@ class StackEnv(BaseRobotEnv):
             xml_path="assets/scene_two_cubes.xml",
             image_state=image_state,
             action_mode=action_mode,
-            render_mode=render_mode
+            render_mode=render_mode,
         )
 
         # Define the action space and observation space

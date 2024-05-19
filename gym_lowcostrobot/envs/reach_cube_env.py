@@ -10,12 +10,12 @@ from gym_lowcostrobot.rewards import proximity_reward
 
 
 class ReachCubeEnv(BaseRobotEnv):
-    def __init__(self, image_state=False,action_mode="joint", render_mode=None):
+    def __init__(self, image_state=False, action_mode="joint", render_mode=None):
         super().__init__(
             xml_path="assets/scene_one_cube.xml",
             image_state=image_state,
             action_mode=action_mode,
-            render_mode=render_mode
+            render_mode=render_mode,
         )
 
         # Define the action space and observation space

@@ -11,22 +11,22 @@ https://github.com/perezjln/envs-lowcostrobot/assets/5373778/de8c6448-1ece-4823-
 
 ## Installation
 
-```
+```sh
 cd gym-lowcostrobot
 pip install .
 ```
 
 ## Test
 
-```
+```sh
 pip install pytest
 pytest
 ```
 
 ## Format
 
-```
+```sh
 pip install ruff
 ruff format gym_lowcostrobot examples tests setup.py --line-length 119
-isort -l 119 .
+isort -l 119 gym_lowcostrobot examples tests setup.py
 ```

@@ -9,9 +9,7 @@ from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
 class BaseEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array"], 
-                "render_fps": 4,
-                "image_state": ["single", "multi"]}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4, "image_state": ["single", "multi"]}
 
     def __init__(
         self,
@@ -104,7 +102,6 @@ class BaseEnv(gym.Env):
         self.current_step += 1
 
     def get_info(self):
-
         if self.image_state == "single":
             self.renderer.update_scene(self.data)
             img = self.renderer.render()

@@ -1,9 +1,7 @@
 import mujoco
 import numpy as np
 
-
 if __name__ == "__main__":
-
     # Load the model from the XML file
     model = mujoco.MjModel.from_xml_path("assets/scene_one_cube.xml")
 

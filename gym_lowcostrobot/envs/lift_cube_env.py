@@ -14,7 +14,7 @@ class LiftCubeEnv(BaseRobotEnv):
             xml_path="assets/scene_one_cube.xml",
             image_state=image_state,
             action_mode=action_mode,
-            render_mode=render_mode
+            render_mode=render_mode,
         )
 
         # Define the action space and observation space
