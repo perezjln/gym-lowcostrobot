@@ -1,6 +1,10 @@
+import os
+
 from gymnasium.envs.registration import register
 
 __version__ = "0.0.1"
+
+ASSETS_PATH = os.path.join(os.path.dirname(__file__), "assets")
 
 register(
     id="LiftCube-v0",
