@@ -81,7 +81,7 @@ class LiftCubeEnv(BaseRobotEnv):
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
         low = [-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0]
         high = [np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0]
-        self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), shape=(12,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)
 
         self.threshold_height = 0.5
         self.set_object_range(obj_xy_range)

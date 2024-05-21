@@ -48,10 +48,6 @@ class ReachCubeEnv(BaseRobotEnv):
     | 5     | X position of the cube                   | Float (m)   | -10.0 | 10.0 |
     | 6     | Y position of the cube                   | Float (m)   | -10.0 | 10.0 |
     | 7     | Z position of the cube                   | Float (m)   | -10.0 | 10.0 |
-    | 8     | Quaternion \( w \) of the cube           | Float       | -1.0  | 1.0  |
-    | 9     | Quaternion \( x \) of the cube           | Float       | -1.0  | 1.0  |
-    | 10    | Quaternion \( y \) of the cube           | Float       | -1.0  | 1.0  |
-    | 11    | Quaternion \( z \) of the cube           | Float       | -1.0  | 1.0  |
 
     ## Reward
 
@@ -72,12 +68,9 @@ class ReachCubeEnv(BaseRobotEnv):
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
         else:
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
-        self.observation_space = spaces.Box(
-            low=np.array([-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0]),
-            high=np.array([np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0]),
-            shape=(12,),
-            dtype=np.float32,
-        )
+        low = np.array([-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0])
+        high = np.array([np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0])
+        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
 
         # Initialize the robot and target positions
         self.threshold_distance = 0.01
@@ -104,7 +97,7 @@ class ReachCubeEnv(BaseRobotEnv):
         return self.get_observation(), info
 
     def get_observation(self):
-        return self.data.qpos.astype(dtype=np.float32)
+        return self.data.qpos[:8].astype(np.float32)
 
     def step(self, action):
         # Perform the action and step the simulation
@@ -113,11 +106,8 @@ class ReachCubeEnv(BaseRobotEnv):
         # Get the new observation
         observation = self.get_observation()
 
-        # cube_id = self.model.body("box").id
-        # cube_pos = self.data.geom_xpos[cube_id]
+        # Compute the distance between the cube and the end-effector
         cube_pos = self.data.joint("red_box_joint").qpos[:3]
-        # ee_id = self.model.body("joint5-pad").id
-        # ee_pos = self.data.geom_xpos[ee_id]
         ee_pos = self.data.joint("joint5").qpos[:3]
         distance = np.linalg.norm(cube_pos - ee_pos)
 

@@ -1,5 +1,4 @@
 import os
-import time
 
 import mujoco
 import mujoco.viewer
@@ -80,7 +79,7 @@ class PickPlaceCubeEnv(BaseRobotEnv):
             self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
         low = [-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0, -10.0, -10.0, -10.0]
         high = [np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0, 10.0, 10.0, 10.0]
-        self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), shape=(15,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)
 
         self.threshold_distance = 0.26
         self.set_object_range(obj_xy_range)
@@ -101,13 +100,8 @@ class PickPlaceCubeEnv(BaseRobotEnv):
         # Sample the target position
         self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
 
-        # Sample and set the object position
-        self.data.joint("red_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
-
         # Step the simulation
-        # mujoco.mj_step(self.model, self.data)
         mujoco.mj_forward(self.model, self.data)
-        self.step_start = time.time()
 
         # Get the additional info
         info = self.get_info()
@@ -115,7 +109,7 @@ class PickPlaceCubeEnv(BaseRobotEnv):
         return self.get_observation(), info
 
     def get_observation(self):
-        return np.concatenate([self.data.xpos.flatten(), self.target_pos], dtype=np.float32)
+        return np.concatenate([self.data.qpos, self.target_pos], dtype=np.float32)
 
     def step(self, action):
         # Perform the action and step the simulation
@@ -124,7 +118,7 @@ class PickPlaceCubeEnv(BaseRobotEnv):
         # Get the new observation
         observation = self.get_observation()
 
-        # Compute the distance
+        # Compute the distance between the cube and the target position
         cube_id = self.model.body("box").id
         cube_pos = self.data.geom_xpos[cube_id]
         distance = np.linalg.norm(cube_pos - self.target_pos)
