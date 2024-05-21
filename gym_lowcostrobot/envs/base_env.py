@@ -5,8 +5,6 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 
-from gym_lowcostrobot.simulated_robot import SimulatedRobot
-
 
 class BaseRobotEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4, "image_state": ["single", "multi"]}
@@ -129,7 +127,7 @@ class BaseRobotEnv(gym.Env):
             img = self.renderer.render()
             dict_cams[cam_ids] = img
         return dict_cams
-    
+
     def set_object_range(self, obj_xy_range):
         self.object_low = np.array([-obj_xy_range, -obj_xy_range, 0.01])
         self.object_high = np.array([obj_xy_range, obj_xy_range, 0.01])

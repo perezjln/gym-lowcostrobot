@@ -1,5 +1,4 @@
 import mujoco
-import numpy as np
 
 if __name__ == "__main__":
     # Load the model from the XML file

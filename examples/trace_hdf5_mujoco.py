@@ -1,27 +1,24 @@
-import h5py
-import time
 import argparse
+import time
 
+import h5py
 import mujoco
 import mujoco.viewer
-import numpy as np
 
 from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
+
 def do_replay_hdf5(args):
-
     # Specify the path to your HDF5 file
-    with h5py.File(args.file_path, 'r') as file:
-
+    with h5py.File(args.file_path, "r") as file:
         m = mujoco.MjModel.from_xml_path("assets/scene_one_cube.xml")
         data = mujoco.MjData(m)
         robot = SimulatedRobot(m, data)
 
-        group_action = file['action']
-        group_qpos = file['observations/qpos']
+        group_action = file["action"]
+        group_qpos = file["observations/qpos"]
 
         with mujoco.viewer.launch_passive(m, data) as viewer:
-
             # Run the simulation
             step = 0
             while viewer.is_running():
@@ -43,7 +40,7 @@ def do_replay_hdf5(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Trace video from HDF5 trace file')
-    parser.add_argument('--file_path', type=str, default='data/episode_46.hdf5', help='Path to HDF5 file')
+    parser = argparse.ArgumentParser(description="Trace video from HDF5 trace file")
+    parser.add_argument("--file_path", type=str, default="data/episode_46.hdf5", help="Path to HDF5 file")
     args = parser.parse_args()
     do_replay_hdf5(args)
