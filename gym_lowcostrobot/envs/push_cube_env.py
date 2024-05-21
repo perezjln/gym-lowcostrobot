@@ -11,7 +11,7 @@ from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 class PushCubeEnv(BaseRobotEnv):
     def __init__(self, image_state=None, action_mode="joint", render_mode=None, target_xy_range=0.2, obj_xy_range=0.2):
         super().__init__(
-            xml_path="assets/scene_one_cube.xml",
+            xml_path="gym_lowcostrobot/assets/scene_one_cube.xml",
             image_state=image_state,
             action_mode=action_mode,
             render_mode=render_mode,

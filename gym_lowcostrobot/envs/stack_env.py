@@ -11,7 +11,7 @@ from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 class StackEnv(BaseRobotEnv):
     def __init__(self, image_state=None, action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
-            xml_path="assets/scene_two_cubes.xml",
+            xml_path="gym_lowcostrobot/assets/scene_two_cubes.xml",
             image_state=image_state,
             action_mode=action_mode,
             render_mode=render_mode,

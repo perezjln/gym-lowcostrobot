@@ -12,9 +12,8 @@ class ReachCubeEnv(BaseRobotEnv):
     """
     ## Description
 
-    The robot has to reach a cube with its end-effector. The cube is placed at a random position within a predefined
-    range. The robot has to reach the cube with its end-effector. The episode is terminated when the end-effector is
-    within a threshold distance from the cube.
+    The robot has to reach a cube with its end-effector. The episode is terminated when the end-effector is within a
+    threshold distance from the cube.
 
     ## Action space
 
@@ -27,7 +26,6 @@ class ReachCubeEnv(BaseRobotEnv):
     | 1     | Joint 2 (shoulder to elbow) | Float (rad) | -1.0 | 1.0 |
     | 2     | Joint 3 (elbow to wrist)    | Float (rad) | -1.0 | 1.0 |
     | 3     | Joint 4 (wrist to gripper)  | Float (rad) | -1.0 | 1.0 |
-    | 4     | Joint 5 (gripper)           | Float (rad) | -1.0 | 1.0 |
 
     In the "ee" mode, the action space is a 3-dimensional box representing the target end-effector position.
 
@@ -62,7 +60,7 @@ class ReachCubeEnv(BaseRobotEnv):
 
     def __init__(self, image_state=None, action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
-            xml_path="assets/scene_one_cube.xml",
+            xml_path="gym_lowcostrobot/assets/scene_one_cube.xml",
             image_state=image_state,
             action_mode=action_mode,
             render_mode=render_mode,
