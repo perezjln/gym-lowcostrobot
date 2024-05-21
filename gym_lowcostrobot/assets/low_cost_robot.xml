@@ -1,5 +1,5 @@
 <mujoco model="low_cost_robot">
-    <compiler angle="radian" meshdir="assets" texturedir="assets" autolimits="true"/>
+    <compiler angle="radian" meshdir="meshes" texturedir="meshes" autolimits="true"/>
     <!-- The timestep has a big influence on the contacts stability -->
     <option cone="elliptic" impratio="10" timestep="0.001"/>
 
