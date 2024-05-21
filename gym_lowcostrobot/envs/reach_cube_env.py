@@ -1,10 +1,11 @@
-import time
+import os
 
 import mujoco
 import mujoco.viewer
 import numpy as np
 from gymnasium import spaces
 
+from gym_lowcostrobot import ASSETS_PATH
 from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 
 
@@ -60,7 +61,7 @@ class ReachCubeEnv(BaseRobotEnv):
 
     def __init__(self, image_state=None, action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
-            xml_path="gym_lowcostrobot/assets/scene_one_cube.xml",
+            xml_path=os.path.join(ASSETS_PATH, "scene_one_cube.xml"),
             image_state=image_state,
             action_mode=action_mode,
             render_mode=render_mode,

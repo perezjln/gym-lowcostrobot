@@ -3,5 +3,6 @@ repos:
     rev: v0.4.3
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --line-length, '127']
       - id: ruff-format
+        args: [--line-length, '127']
