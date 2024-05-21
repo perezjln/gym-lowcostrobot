@@ -11,7 +11,7 @@ from gym_lowcostrobot.simulated_robot import SimulatedRobot
 def do_replay_hdf5(args):
     # Specify the path to your HDF5 file
     with h5py.File(args.file_path, "r") as file:
-        m = mujoco.MjModel.from_xml_path("assets/scene_one_cube.xml")
+        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/scene_one_cube.xml")
         data = mujoco.MjData(m)
         robot = SimulatedRobot(m, data)
 
