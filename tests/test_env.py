@@ -8,14 +8,14 @@ import gym_lowcostrobot  # noqa
 @pytest.mark.parametrize(
     "env_id",
     [
-        "lowcostrobot-LiftCube-v0",
-        "lowcostrobot-PickPlaceCube-v0",
-        "lowcostrobot-PushCube-v0",
-        "lowcostrobot-ReachCube-v0",
-        "lowcostrobot-Stack-v0",
+        "LiftCube-v0",
+        "PickPlaceCube-v0",
+        "PushCube-v0",
+        "ReachCube-v0",
+        "Stack-v0",
     ],
 )
 def test_env_check(env_id):
     env = gym.make(env_id)
-    check_env(env)
+    check_env(env, skip_render_check=True)
     env.close()

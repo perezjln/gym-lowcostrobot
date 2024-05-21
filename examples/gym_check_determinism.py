@@ -2,11 +2,11 @@ import gymnasium as gym
 
 if __name__ == "__main__":
     for env_name in [
-        "lowcostrobot-LiftCube-v0",
-        "lowcostrobot-PickPlaceCube-v0",
-        "lowcostrobot-PushCube-v0",
-        "lowcostrobot-ReachCube-v0",
-        "lowcostrobot-Stack-v0",
+        "LiftCube-v0",
+        "PickPlaceCube-v0",
+        "PushCube-v0",
+        "ReachCube-v0",
+        "Stack-v0",
     ]:
         env = gym.make(env_name)
         observation1, info = env.reset(seed=123)
