@@ -23,24 +23,24 @@
                 <position ctrlrange="-60.14158 60.14158" kp="25"/>
             </default>
             <default class="Shoulder_Pitch">
-                <joint pos="0 0 0" axis="0 0 1" range="-3.14158 3.14158" damping="0.1"/>
-                <position ctrlrange="-3.14158 3.14158" kp="25"/>
+                <joint pos="0 0 0" axis="0 0 1" range="-2.17 1.1" damping="0.1"/>
+                <position ctrlrange="-2.17 1.1" kp="25"/>
             </default>
             <default class="Elbow">
-                <joint pos="0 0 0" axis="0 0 1" range="-3.14158 3.14158" damping="0.1"/>            
-                <position ctrlrange="-3.14158 3.14158" kp="25"/>
+                <joint pos="0 0 0" axis="0 0 1" range="-1.5 2.25" damping="0.1"/>            
+                <position ctrlrange="-1.5 2.25" kp="25"/>
             </default>
             <default class="Wrist_Pitch">
-                <joint pos="0 0 0" axis="1 0 0" range="-3.14158 3.14158" damping="0.1"/>
-                <position ctrlrange="-3.14158 3.14158" kp="25"/>
+                <joint pos="0 0 0" axis="1 0 0" range="-1.95 0.725" damping="0.1"/>
+                <position ctrlrange="-1.95 0.725" kp="25"/>
             </default>
             <default class="Wrist_Roll">
-                <joint pos="0 0 0" axis="0 0 1" range="-2.45 0.032" damping="0.1"/>            
-                <position ctrlrange="-2.45 0.032" kp="25"/>
+                <joint pos="0 0 0" axis="0 0 1" range="-1.5 1.5" damping="0.1"/>            
+                <position ctrlrange="-1.5 1.5" kp="25"/>
             </default>
             <default class="Gripper">
-                <joint pos="0 0 0" axis="0 0 1" range="0.032 2.45" damping="0.1"/>            
-                <position ctrlrange="0.032 2.45" kp="25"/>
+                <joint pos="0 0 0" axis="0 0 1" range="0.032 1.5" damping="0.1"/>            
+                <position ctrlrange="0.032 1.5" kp="25"/>
             </default>
         </default>
     </default>
