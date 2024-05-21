@@ -9,11 +9,7 @@ from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 
 
 class StackEnv(BaseRobotEnv):
-    def __init__(self,
-                 image_state=None, 
-                 action_mode="joint", 
-                 render_mode=None,
-                 obj_xy_range=0.15):
+    def __init__(self, image_state=None, action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
             xml_path="assets/scene_two_cubes.xml",
             image_state=image_state,
@@ -41,14 +37,14 @@ class StackEnv(BaseRobotEnv):
         super().reset(seed=seed, options=options)
 
         # Sample the target position and set the robot position
-        #self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
+        # self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
 
         # Sample and set the objects positions
         self.data.joint("red_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
         self.data.joint("blue_box_joint").qpos[:3] = self.np_random.uniform(self.object_low, self.object_high)
 
         # Step the simulation
-        #mujoco.mj_step(self.model, self.data)
+        # mujoco.mj_step(self.model, self.data)
         mujoco.mj_forward(self.model, self.data)
         self.step_start = time.time()
 
