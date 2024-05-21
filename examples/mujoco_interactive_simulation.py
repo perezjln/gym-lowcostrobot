@@ -1,3 +1,4 @@
+import argparse
 import time
 
 import mujoco
@@ -42,4 +43,11 @@ def do_interactive_sim_6dof():
 
 
 if __name__ == "__main__":
-    do_interactive_sim_6dof()
+    parser = argparse.ArgumentParser(description="Choose between 5dof and 6dof lowcost robot simulation.")
+    parser.add_argument("--robot", choices=["5dof", "6dof"], default="5dof", help="Choose the lowcost robot type")
+    args = parser.parse_args()
+
+    if args.robot == "5dof":
+        do_interactive_sim_5dof()
+    elif args.robot == "6dof":
+        do_interactive_sim_6dof()
