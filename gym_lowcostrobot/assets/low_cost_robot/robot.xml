@@ -1,0 +1,101 @@
+<mujoco model="onshape">
+  <compiler angle="radian"/>
+  <default>
+    <joint damping="0.2" frictionloss="0.1"/>
+    <position kp="10" forcerange="-1.0 1.0"/>
+  </default>
+  <asset>
+    <mesh name="base" file="base.stl"/>
+    <mesh name="dc11_a01_spacer_dummy" file="dc11_a01_spacer_dummy.stl"/>
+    <mesh name="dc11_a01_dummy" file="dc11_a01_dummy.stl"/>
+    <mesh name="rotation_connector" file="rotation_connector.stl"/>
+    <mesh name="arm_connector" file="arm_connector.stl"/>
+    <mesh name="dc15_a01_horn_idle2_dummy" file="dc15_a01_horn_idle2_dummy.stl"/>
+    <mesh name="dc15_a01_case_m_dummy" file="dc15_a01_case_m_dummy.stl"/>
+    <mesh name="dc15_a01_case_f_dummy" file="dc15_a01_case_f_dummy.stl"/>
+    <mesh name="dc15_a01_horn_dummy" file="dc15_a01_horn_dummy.stl"/>
+    <mesh name="dc15_a01_case_b_dummy" file="dc15_a01_case_b_dummy.stl"/>
+    <mesh name="connector" file="connector.stl"/>
+    <mesh name="shoulder_rotation" file="shoulder_rotation.stl"/>
+    <mesh name="static_side" file="static_side.stl"/>
+    <mesh name="moving_side" file="moving_side.stl"/>
+  </asset>
+  <worldbody>
+    <geom pos="0.0401555 -0.0353754 -0.0242427" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="base"/>
+    <geom pos="0.0511555 0.0406246 0.0099573" quat="0 0 0 1" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    <geom pos="0.0291555 0.000624643 0.0099573" quat="0 0 0 1" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    <geom pos="0.0511555 0.000624643 -0.0184427" quat="0 0 1 0" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    <geom pos="0.0401555 0.0326246 -0.0042427" type="mesh" rgba="0.498039 0.498039 0.498039 1" mesh="dc11_a01_dummy"/>
+    <geom pos="0.0291555 0.000624643 -0.0184427" quat="0 0.707107 0.707107 0" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    <geom pos="0.0291555 0.0406246 0.0099573" quat="0.707107 0 0 -0.707107" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    <geom pos="0.0511555 0.0406246 -0.0184427" quat="0 0.707107 -0.707107 0" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    <geom pos="0.0291555 0.0406246 -0.0184427" quat="0 -1 0 0" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    <geom pos="0.0511555 0.000624643 0.0099573" quat="0.707107 0 0 0.707107" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    <body name="pitch1_assembly" pos="0.0401555 0.0326246 0.0166573">
+      <inertial pos="-0.000767103 -0.0121505 0.0134241" quat="0.498429 0.53272 -0.473938 0.493113" mass="0.0606831" diaginertia="1.86261e-05 1.72746e-05 1.11693e-05"/>
+      <joint name="yaw" pos="0 0 0" axis="0 0 1" range="-3.14159 3.14159" actuatorfrcrange="-1 1"/>
+      <geom pos="0 0 -0.0209" type="mesh" rgba="0.231373 0.380392 0.705882 1" mesh="rotation_connector"/>
+      <geom pos="-0.014 0.008 0.0264" quat="0 -0.707107 0 0.707107" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+      <geom pos="-0.014 -0.032 0.0044" quat="0 -0.707107 0 0.707107" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+      <geom pos="0.0144 -0.032 0.0264" quat="0.707107 0 0.707107 0" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+      <geom pos="0.0002 0 0.0154" quat="0.707107 0 -0.707107 0" type="mesh" rgba="0.498039 0.498039 0.498039 1" mesh="dc11_a01_dummy"/>
+      <geom pos="0.0144 -0.032 0.0044" quat="0.5 0.5 0.5 0.5" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+      <geom pos="-0.014 0.008 0.0044" quat="0.5 0.5 -0.5 -0.5" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+      <geom pos="0.0144 0.008 0.0264" quat="0.5 -0.5 0.5 -0.5" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+      <geom pos="0.0144 0.008 0.0044" quat="0 0.707107 0 0.707107" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+      <geom pos="-0.014 -0.032 0.0264" quat="0.5 -0.5 -0.5 0.5" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+      <body name="pitch2_assembly" pos="-0.0188 0 0.0154" quat="0 0.707107 0 0.707107">
+        <inertial pos="0.0766242 -0.00031229 0.0187402" quat="0.52596 0.513053 0.489778 0.469319" mass="0.0432446" diaginertia="7.21796e-05 7.03107e-05 1.07533e-05"/>
+        <joint name="pitch1" pos="0 0 0" axis="0 0 1" range="-1.5708 1.22173" actuatorfrcrange="-1 1"/>
+        <geom pos="0 0 0.019" quat="0.5 -0.5 -0.5 -0.5" type="mesh" rgba="0.980392 0.713726 0.00392157 1" mesh="arm_connector"/>
+        <geom pos="0.1083 -0.0148 0.03035" quat="1 0 0 0" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc15_a01_horn_idle2_dummy"/>
+        <geom pos="0.1083 -0.0148 0.01075" quat="0 -1 0 0" type="mesh" rgba="0.615686 0.811765 0.929412 1" mesh="dc15_a01_case_m_dummy"/>
+        <geom pos="0.1083 -0.0148 0.01075" quat="0 -1 0 0" type="mesh" rgba="0.980392 0.713726 0.00392157 1" mesh="dc15_a01_case_f_dummy"/>
+        <geom pos="0.1083 -0.0148 0.00715" quat="0 0 0.707107 -0.707107" type="mesh" rgba="0.972549 0.529412 0.00392157 1" mesh="dc15_a01_horn_dummy"/>
+        <geom pos="0.1083 -0.0148 0.03025" quat="0 -1 0 0" type="mesh" rgba="0.498039 0.498039 0.498039 1" mesh="dc15_a01_case_b_dummy"/>
+        <body name="pitch3_assembly" pos="0.1083 -0.0148 0.00425" quat="0.707107 0 0 0.707107">
+          <inertial pos="-0.0551014 -0.00287792 0.0144813" quat="0.500323 0.499209 0.499868 0.5006" mass="0.0788335" diaginertia="6.80912e-05 6.45748e-05 9.84479e-06"/>
+          <joint name="pitch2" pos="0 0 0" axis="0 0 1" range="-1.48353 1.74533" actuatorfrcrange="-1 1"/>
+          <geom pos="-0.00863031 0.00847376 0.0145" quat="0.5 0.5 0.5 -0.5" type="mesh" rgba="0.615686 0.811765 0.929412 1" mesh="connector"/>
+          <geom pos="-0.100476 -0.00269986 0.02635" quat="0.707107 0 0 -0.707107" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc15_a01_horn_idle2_dummy"/>
+          <geom pos="-0.100476 -0.00269986 0.00675" quat="0 -0.707107 0.707107 0" type="mesh" rgba="0.615686 0.811765 0.929412 1" mesh="dc15_a01_case_m_dummy"/>
+          <geom pos="-0.100476 -0.00269986 0.00675" quat="0 -0.707107 0.707107 0" type="mesh" rgba="0.980392 0.713726 0.00392157 1" mesh="dc15_a01_case_f_dummy"/>
+          <geom pos="-0.100476 -0.00269986 0.00315" quat="0.5 -0.5 -0.5 0.5" type="mesh" rgba="0.972549 0.529412 0.00392157 1" mesh="dc15_a01_horn_dummy"/>
+          <geom pos="-0.100476 -0.00269986 0.02625" quat="0 -0.707107 0.707107 0" type="mesh" rgba="0.498039 0.498039 0.498039 1" mesh="dc15_a01_case_b_dummy"/>
+          <body name="effector_roll_assembly" pos="-0.100476 -0.00269986 0.02925" quat="0 -0.707107 -0.707107 0">
+            <inertial pos="-1.65017e-05 -0.02659 0.0195388" quat="0.936813 0.349829 -0.00055331 -0.000300569" mass="0.0240506" diaginertia="6.03208e-06 4.12894e-06 3.3522e-06"/>
+            <joint name="pitch3" pos="0 0 0" axis="0 0 1" range="-1.91986 1.91986" actuatorfrcrange="-1 1"/>
+            <geom pos="-0.0109998 -0.0190002 0.039" quat="0.707107 -0.707107 0 0" type="mesh" rgba="0.615686 0.811765 0.929412 1" mesh="shoulder_rotation"/>
+            <geom pos="-7.44154e-06 -0.0385002 0.0133967" quat="0 0 0.707107 -0.707107" type="mesh" rgba="0.615686 0.811765 0.929412 1" mesh="dc15_a01_case_m_dummy"/>
+            <geom pos="-7.44154e-06 -0.0385002 0.0133967" quat="0 0 0.707107 -0.707107" type="mesh" rgba="0.980392 0.713726 0.00392157 1" mesh="dc15_a01_case_f_dummy"/>
+            <geom pos="-7.44154e-06 -0.0421002 0.0133967" quat="0 1 0 0" type="mesh" rgba="0.972549 0.529412 0.00392157 1" mesh="dc15_a01_horn_dummy"/>
+            <geom pos="-7.44154e-06 -0.0190002 0.0133967" quat="0 0 0.707107 -0.707107" type="mesh" rgba="0.498039 0.498039 0.498039 1" mesh="dc15_a01_case_b_dummy"/>
+            <body name="gripper_assembly" pos="-7.44154e-06 -0.0450002 0.0133967" quat="0.5 -0.5 -0.5 -0.5">
+              <inertial pos="-0.00548595 -0.000433143 -0.0190793" quat="0.700194 0.164851 0.167361 0.674197" mass="0.0360627" diaginertia="1.3261e-05 1.231e-05 5.3532e-06"/>
+              <joint name="effector_roll" pos="0 0 0" axis="0 0 1" range="-2.96706 2.96706" actuatorfrcrange="-1 1"/>
+              <geom pos="-0.00075 -0.01475 -0.02" quat="0.707107 -0.707107 0 0" type="mesh" rgba="0.917647 0.917647 0.917647 1" mesh="static_side"/>
+              <geom pos="0.00755 0.01135 -0.013" quat="0.5 -0.5 0.5 0.5" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc15_a01_horn_idle2_dummy"/>
+              <geom pos="0.00755 -0.00825 -0.013" quat="0.5 0.5 0.5 -0.5" type="mesh" rgba="0.615686 0.811765 0.929412 1" mesh="dc15_a01_case_m_dummy"/>
+              <geom pos="0.00755 -0.00825 -0.013" quat="0.5 0.5 0.5 -0.5" type="mesh" rgba="0.980392 0.713726 0.00392157 1" mesh="dc15_a01_case_f_dummy"/>
+              <geom pos="0.00755 -0.01185 -0.013" quat="0 -0.707107 0 -0.707107" type="mesh" rgba="0.972549 0.529412 0.00392157 1" mesh="dc15_a01_horn_dummy"/>
+              <geom pos="0.00755 0.01125 -0.013" quat="0.5 0.5 0.5 -0.5" type="mesh" rgba="0.498039 0.498039 0.498039 1" mesh="dc15_a01_case_b_dummy"/>
+              <body name="moving_side" pos="0.00755 -0.01475 -0.013" quat="0.707107 -0.707107 0 0">
+                <inertial pos="-0.000395599 0.022415 0.0145636" quat="0.722353 0.689129 0.0389102 0.0423547" mass="0.0089856" diaginertia="3.28451e-06 2.24898e-06 1.41539e-06"/>
+                <joint name="gripper_opening" pos="0 0 0" axis="0 0 1" range="-1.74533 0.0523599" actuatorfrcrange="-1 1"/>
+                <geom pos="-0.00838199 -0.000256591 -0.003" type="mesh" rgba="0.768627 0.886275 0.952941 1" mesh="moving_side"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <position name="yaw" joint="yaw" inheritrange="1"/>
+    <position name="pitch1" joint="pitch1" inheritrange="1"/>
+    <position name="pitch2" joint="pitch2" inheritrange="1"/>
+    <position name="pitch3" joint="pitch3" inheritrange="1"/>
+    <position name="effector_roll" joint="effector_roll" inheritrange="1"/>
+    <position name="gripper_opening" joint="gripper_opening" inheritrange="1"/>
+  </actuator>
+</mujoco>
