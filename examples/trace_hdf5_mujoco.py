@@ -11,7 +11,7 @@ from gym_lowcostrobot.simulated_robot import SimulatedRobot
 def do_replay_hdf5(args):
     # Specify the path to your HDF5 file
     with h5py.File(args.file_path, "r") as file:
-        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_robot/scene.xml")
+        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/scene_so_arm_6dof_one_cube.xml")
         data = mujoco.MjData(m)
         robot = SimulatedRobot(m, data)
 
@@ -25,7 +25,7 @@ def do_replay_hdf5(args):
                 step_start = time.time()
 
                 # Step the simulation forward
-                robot.set_target_pos(group_action[step][0:6])
+                robot.set_target_pos(group_qpos[step][0:6])
                 mujoco.mj_step(m, data)
 
                 viewer.sync()
@@ -35,8 +35,10 @@ def do_replay_hdf5(args):
                 if time_until_next_step > 0:
                     time.sleep(time_until_next_step)
 
+
                 step += 1
-                step = step % len(group_qpos)
+                print(group_qpos[step][0:6])
+                #step = step % len(group_qpos)
 
 
 if __name__ == "__main__":
