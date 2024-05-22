@@ -64,10 +64,8 @@ class ReachCubeEnv(BaseRobotEnv):
         )
 
         # Define the action space and observation space
-        if self.action_mode == "ee":
-            self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
-        else:
-            self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
+        self.action_space = self.set_action_space_without_gripper()
+
         low = np.array([-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0])
         high = np.array([np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0])
         self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
@@ -100,6 +98,7 @@ class ReachCubeEnv(BaseRobotEnv):
         return self.data.qpos[:8].astype(np.float32)
 
     def step(self, action):
+        
         # Perform the action and step the simulation
         self.base_step_action_nograsp(action)
 

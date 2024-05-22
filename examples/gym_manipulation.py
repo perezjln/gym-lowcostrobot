@@ -1,8 +1,13 @@
-from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
 
+from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
+from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
+from gym_lowcostrobot.envs.push_cube_env import PushCubeEnv
+from gym_lowcostrobot.envs.pick_place_cube_env import PickPlaceCubeEnv
+from gym_lowcostrobot.envs.stack_env import StackEnv
 
 def do_env_sim():
-    env = ReachCubeEnv(render_mode="human", action_mode="joint")
+
+    env = StackEnv(render_mode="human", action_mode="ee")
     env.reset()
 
     max_step = 1000000

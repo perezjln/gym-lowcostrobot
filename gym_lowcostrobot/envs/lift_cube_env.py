@@ -75,10 +75,8 @@ class LiftCubeEnv(BaseRobotEnv):
         )
 
         # Define the action space and observation space
-        if self.action_mode == "ee":
-            self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=np.float32)
-        else:
-            self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(5,), dtype=np.float32)
+        self.action_space = self.set_action_space_with_gripper()
+        
         low = [-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0]
         high = [np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0]
         self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)

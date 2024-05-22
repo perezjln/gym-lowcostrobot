@@ -1,10 +1,11 @@
 import time
 
 import gymnasium as gym
+from gymnasium import spaces
+
 import mujoco
 import mujoco.viewer
 import numpy as np
-
 
 class BaseRobotEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4, "image_state": ["single", "multi"]}
@@ -32,7 +33,32 @@ class BaseRobotEnv(gym.Env):
         self.action_mode = action_mode
         self.current_step = 0
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="end_effector"):
+    def set_action_space_with_gripper(self):
+        # Define the action space and observation space
+        if self.action_mode == "ee":
+            low_action = np.array([-1.0, -1.0, -1.0, -1.0], dtype=np.float32)
+            high_action = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+            action_size = 3 + 1
+        else:
+            low_action = np.array([-1.0, -1.0, -1.0, -1.0, -1.0], dtype=np.float32)
+            high_action = np.array([1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+            action_size = 5
+        return spaces.Box(low=low_action, high=high_action, shape=(action_size,), dtype=np.float32)
+
+    def set_action_space_without_gripper(self):
+        # Define the action space and observation space
+        if self.action_mode == "ee":
+            low_action = np.array([-1.0, -1.0, -1.0], dtype=np.float32)
+            high_action = np.array([1.0, 1.0, 1.0], dtype=np.float32)
+            action_size = 3
+        else:
+            low_action = np.array([-1.0, -1.0, -1.0, -1.0], dtype=np.float32)
+            high_action = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+            action_size = 4
+        return spaces.Box(low=low_action, high=high_action, shape=(action_size,), dtype=np.float32)
+
+
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="end_effector", nb_joint=5):
         """
         :param ee_target_pos: numpy array of target end effector position
         :param joint_name: name of the end effector joint
@@ -47,8 +73,8 @@ class BaseRobotEnv(gym.Env):
         mujoco.mj_jacBodyCom(self.model, self.data, jac, None, joint_id)
 
         # compute target joint velocities
-        qpos = self.data.qpos[:5]
-        qdot = np.dot(np.linalg.pinv(jac[:, :5]), ee_target_pos - ee_pos)
+        qpos = self.data.qpos[:nb_joint]
+        qdot = np.dot(np.linalg.pinv(jac[:, :nb_joint]), ee_target_pos - ee_pos)
 
         # apply the joint velocities
         q_target_pos = qpos + qdot * step
@@ -60,31 +86,33 @@ class BaseRobotEnv(gym.Env):
     def get_actuator_ranges(self):
         return self.model.actuator_ctrlrange
 
-    def base_step_action_nograsp(self, action):
+    def base_step_action_nograsp(self, action, joint_name="joint5-pad"):
         if self.action_mode == "ee":
             # Update the robot position based on the action
-            ee_id = self.model.body("joint5-pad").id
-            ee_target_pos = self.data.xpos[ee_id] + action[:3]
+            ee_id = self.model.body(joint_name).id
+            ee_target_pos = self.data.xpos[ee_id] + action
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-            q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
+            q_target_pos = self.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name=joint_name)
             q_target_pos[-1:] = 0.0  # Close the gripper
             self.set_target_pos(q_target_pos)
         else:
-            self.set_target_pos(action)
+            q_target_pos = np.zeros(action.shape[0] + 1)
+            q_target_pos[:-1] = action
+            self.set_target_pos(q_target_pos)
 
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
         self.current_step += 1
 
-    def base_step_action_withgrasp(self, action):
+    def base_step_action_withgrasp(self, action, joint_name="joint5-pad"):
         if self.action_mode == "ee":
             # Update the robot position based on the action
-            ee_id = self.model.body("joint5-pad").id
+            ee_id = self.model.body(joint_name).id
             ee_target_pos = self.data.xpos[ee_id] + action[:3]
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-            q_target_pos = self.robot.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="joint5-pad")
+            q_target_pos = self.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name=joint_name)
             q_target_pos[-1:] = np.sign(action[-1])  # Open or close the gripper
             self.set_target_pos(q_target_pos)
         else:
