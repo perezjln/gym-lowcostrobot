@@ -157,9 +157,9 @@ class BaseRobotEnv(gym.Env):
         return dict_cams
 
     def set_object_range(self, obj_xy_range):
-        self.object_low = np.array([-obj_xy_range, -obj_xy_range, 0.01])
-        self.object_high = np.array([obj_xy_range, obj_xy_range, 0.01])
+        self.object_low = np.array([-obj_xy_range, -obj_xy_range, 0.05])
+        self.object_high = np.array([obj_xy_range, obj_xy_range, 0.05])
 
     def set_target_range(self, target_xy_range):
-        self.target_low = np.array([-target_xy_range, -target_xy_range, 0.01])
-        self.target_high = np.array([target_xy_range, target_xy_range, 0.01])
+        self.target_low = np.array([-target_xy_range, -target_xy_range, 0.05])
+        self.target_high = np.array([target_xy_range, target_xy_range, 0.05])
