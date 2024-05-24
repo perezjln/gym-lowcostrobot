@@ -15,6 +15,7 @@
 
 
     <default>
+        <joint frictionloss="0.1"/>
         <default class="low_cost_robot_6dof">
             <general biastype="affine"/>
             <joint axis="0 1 0"/>
