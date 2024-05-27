@@ -30,7 +30,7 @@
 
   <camera name="camera_top" pos="0 0 1" euler="0 0 0" mode="fixed"/>
   <camera name="camera_right" pos="-0.686 0.108 0.264" xyaxes="-0.029 -1.000 -0.000 0.386 -0.011 0.923"/>
-  <camera name="camera_left" pos="0.709 0.104 0.221" xyaxes="-0.023 1.000 0.000 -0.328 -0.008 0.945"/>
+  <camera name="camera_front" pos="0.709 0.104 0.221" xyaxes="-0.023 1.000 0.000 -0.328 -0.008 0.945"/>
   </worldbody>
 
 </mujoco>

@@ -1,4 +1,9 @@
-import gymnasium as gym
+
+import gymnasium
+from gymnasium.wrappers.filter_observation import FilterObservation
+from gymnasium.wrappers.flatten_observation import FlattenObservation
+
+import gym_lowcostrobot
 
 if __name__ == "__main__":
     for env_name in [
@@ -8,7 +13,10 @@ if __name__ == "__main__":
         "ReachCube-v0",
         "Stack-v0",
     ]:
-        env = gym.make(env_name)
+        env = gymnasium.make(env_name)
+        env = FilterObservation(env, ["arm_qpos", "object_qpos"])
+        env = FlattenObservation(env)
+
         observation1, info = env.reset(seed=123)
         observation2, info = env.reset(seed=123)
         observation3, info = env.reset(seed=123)

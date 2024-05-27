@@ -9,8 +9,12 @@ def do_env_sim_image():
 
     max_step = 1000
     for _ in range(max_step):
+
         action = env.action_space.sample()
         _, _, terminated, truncated, info = env.step(action)
+
+        print(info["img"].shape)
+        input("Press Enter to continue...")
 
         plt.imshow(info["img"])
         plt.show()

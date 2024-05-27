@@ -12,6 +12,7 @@ def do_env_sim():
 
     max_step = 1000000
     for _ in range(max_step):
+        
         action = env.action_space.sample()
         observation, reward, terminated, truncated, info = env.step(action)
 

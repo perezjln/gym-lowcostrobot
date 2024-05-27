@@ -65,7 +65,7 @@ def do_simple_invk(robot_id="5dof"):
             print("Cube dist:", np.linalg.norm(cube_pos - ee_pos))
             if np.linalg.norm(cube_pos - ee_pos) < min_dist or np.linalg.norm(cube_pos - ee_pos) > max_dist:
                 print("Cube reached the target position")
-                data.joint(object_id).qpos[:3] = [np.random.rand() * 0.2, np.random.rand() * 0.2, 0.01]
+                data.joint(object_id).qpos[:3] = [np.random.rand() * 0.5, np.random.rand() * 0.5, 0.01]
                 mujoco.mj_step(m, data)
                 viewer.sync()
 

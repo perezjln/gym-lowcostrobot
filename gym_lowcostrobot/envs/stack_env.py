@@ -3,6 +3,8 @@ import os
 import mujoco
 import mujoco.viewer
 import numpy as np
+
+import gymnasium as gym
 from gymnasium import spaces
 
 from gym_lowcostrobot import ASSETS_PATH
@@ -75,9 +77,23 @@ class StackEnv(BaseRobotEnv):
         # Define the action space and observation space
         self.action_space = self.set_action_space_with_gripper()
         
+        """
         low = [-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0]  # ruff: noqa: E501
         high = [np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0]  # ruff: noqa: E501
         self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)
+        """
+        
+        spaces = {
+            "image_front":  gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
+            "image_top":  gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
+            "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(5,)),
+            "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(5,)),
+            "object_qpos":  gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
+            "object_qvel":  gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
+            "target_qpos":  gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
+            "target_qvel":  gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
+            }
+        self.observation_space = gym.spaces.Dict(spaces)
 
         self.threshold_distance = 0.05
         self.set_object_range(obj_xy_range)
@@ -101,7 +117,7 @@ class StackEnv(BaseRobotEnv):
         # Get the additional info
         info = self.get_info()
 
-        return self.get_observation(), info
+        return self.get_observation_dict_two_objects(), info
 
     def get_observation(self):
         return self.data.qpos.astype(dtype=np.float32)
@@ -111,7 +127,7 @@ class StackEnv(BaseRobotEnv):
         self.base_step_action_withgrasp(action)
 
         # Get the new observation
-        observation = self.get_observation()
+        observation = self.get_observation_dict_two_objects()
 
         # Check if the stack is successful
         cube1_id = self.model.body("box1").id

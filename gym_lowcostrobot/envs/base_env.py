@@ -150,7 +150,7 @@ class BaseRobotEnv(gym.Env):
 
     def get_camera_images(self):
         dict_cams = {}
-        for cam_ids in ["camera_left", "camera_right", "camera_top"]:
+        for cam_ids in ["camera_front", "camera_right", "camera_top"]:
             self.renderer.update_scene(self.data, camera=cam_ids)
             img = self.renderer.render()
             dict_cams[cam_ids] = img
@@ -163,3 +163,34 @@ class BaseRobotEnv(gym.Env):
     def set_target_range(self, target_xy_range):
         self.target_low = np.array([-target_xy_range, -target_xy_range, 0.05])
         self.target_high = np.array([target_xy_range, target_xy_range, 0.05])
+
+    def get_observation_dict_one_object(self):
+
+        if self.image_state:
+            dict_imgs = self.get_camera_images()
+
+        return {
+            "image_front": dict_imgs['camera_front'] if self.image_state else None,
+            "image_top": dict_imgs['camera_top'] if self.image_state else None,
+            "arm_qpos": self.data.qpos[:5].astype(np.float32),
+            "arm_qvel": self.data.qvel[:5].astype(np.float32),
+            "object_qpos":  self.data.qpos[5:8].astype(np.float32),
+            "object_qvel":  self.data.qvel[5:8].astype(np.float32),
+            }
+
+    def get_observation_dict_two_objects(self):
+
+        if self.image_state:
+            dict_imgs = self.get_camera_images()
+
+        return {
+            "image_front": dict_imgs['camera_front'] if self.image_state else None,
+            "image_top": dict_imgs['camera_top'] if self.image_state else None,
+            "arm_qpos": self.data.qpos[:5].astype(np.float32),
+            "arm_qvel": self.data.qvel[:5].astype(np.float32),
+            "object_qpos":  self.data.qpos[5:8].astype(np.float32),
+            "object_qvel":  self.data.qvel[5:8].astype(np.float32),
+            "target_qpos":  self.data.qpos[8:11].astype(np.float32),
+            "target_qvel":  self.data.qvel[8:11].astype(np.float32),
+            }
+    

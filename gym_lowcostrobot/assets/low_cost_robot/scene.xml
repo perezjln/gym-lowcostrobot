@@ -25,5 +25,9 @@
 			<inertial pos="0 0 0" mass="0.4" diaginertia="0.00016667 0.00016667 0.00016667"/>
 			<geom friction="0.5" condim="3" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="red_box" rgba="0.5 0 0 1" priority="1"/>
     	</body>
+
+		  <camera name="camera_top" pos="0 0 1" euler="0 0 0" mode="fixed"/>
+			<camera name="camera_right" pos="-0.796 0.049 0.370" xyaxes="-0.020 -1.000 0.000 0.421 -0.008 0.907"/>
+			<camera name="camera_front" pos="0.049 0.888 0.317" xyaxes="-0.998 0.056 -0.000 -0.019 -0.335 0.942"/>
 	</worldbody>
 </mujoco>

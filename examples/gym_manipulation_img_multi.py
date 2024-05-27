@@ -9,6 +9,7 @@ def do_env_sim_image():
 
     max_step = 1000
     for _ in range(max_step):
+
         action = env.action_space.sample()
         _, _, terminated, truncated, info = env.step(action)
 
