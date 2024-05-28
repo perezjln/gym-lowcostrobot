@@ -116,6 +116,7 @@ class RecordHDF5Wrapper(gym.Wrapper):
         video_name = f"{self.name_prefix}-episode-{self.episode_id}.hdf5"
         self.hdf5_recorder.start_hdf5_recorder(hdf5_file=os.path.join(self.hdf5_folder, video_name))
         self.recording = True
+        self.episode_id += 1
 
 
     def step(self, action):
@@ -124,7 +125,6 @@ class RecordHDF5Wrapper(gym.Wrapper):
         observations, rewards, terminateds, truncateds, infos = self.env.step(action)
 
         # increment steps and episodes
-
         if self.recording:
             assert self.hdf5_recorder is not None
 
@@ -136,10 +136,10 @@ class RecordHDF5Wrapper(gym.Wrapper):
             else:
                 if not self.is_vector_env:
                     if terminateds or truncateds:
-                        self.close_hdf5_recorder()
+                        self.start_hdf5_recorder()
                 elif terminateds[0] or truncateds[0]:
-                    self.close_hdf5_recorder()
-
+                    self.start_hdf5_recorder()
+        
         return observations, rewards, terminateds, truncateds, infos
 
     def close_hdf5_recorder(self):

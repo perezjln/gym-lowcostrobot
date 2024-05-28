@@ -1,4 +1,4 @@
-import argparse
+import argparse, tqdm
 
 from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
 from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
@@ -14,8 +14,8 @@ def do_record_hdf5(args):
     env = RecordHDF5Wrapper(env, hdf5_folder=args.folder, length=1000, name_prefix="reach")
     env.reset()
 
-    max_step = 20
-    for _ in range(max_step):
+    max_step = 20000
+    for _ in tqdm.tqdm(range(max_step)):
         action = env.action_space.sample()
         observation, reward, terminated, truncated, info = env.step(action)
         if terminated:
