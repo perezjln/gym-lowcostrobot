@@ -16,7 +16,7 @@ def displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer):
 def do_simple_invk(robot_id="5dof", do_reset=False):
 
     if robot_id == "5dof":
-        path_scene = "gym_lowcostrobot/assets/scene_one_cube.xml"
+        path_scene = "gym_lowcostrobot/assets/low_cost_robot_5dof/scene_one_cube.xml"
         joint_name = "joint5-pad"
         object_id = "red_box_joint"
         nb_dof = 5
@@ -34,7 +34,7 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
         coef_sample = 2.0
         min_dist_obj = 0.05
     else:
-        path_scene = "gym_lowcostrobot/assets/scene_so_arm_6dof_one_cube.xml"
+        path_scene = "gym_lowcostrobot/assets/low_cost_so_arm100_dof6/scene_so_arm_6dof_one_cube.xml"
         joint_name = "Fixed_Gripper"
         object_id = "red_box_joint"
         nb_dof = 6

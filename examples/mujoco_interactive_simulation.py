@@ -8,11 +8,11 @@ import mujoco.viewer
 def do_interactive_sim(robot_id):
 
     if robot_id == "5dof":
-        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/scene_one_cube.xml")
+        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_robot_5dof/scene_one_cube.xml")
     elif robot_id == "6dof":
-        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_robot/scene.xml")
+        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_robot_6dof/scene.xml")
     elif robot_id == "6dof_soarm":
-        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/scene_so_arm_6dof_one_cube.xml")
+        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_so_arm100_dof6/scene_so_arm_6dof_one_cube.xml")
 
     data = mujoco.MjData(m)
 

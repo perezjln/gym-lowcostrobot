@@ -2,7 +2,7 @@ import mujoco
 
 if __name__ == "__main__":
     # Load the model from the XML file
-    model = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/scene_one_cube.xml")
+    model = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_robot_5dof/scene_one_cube.xml")
 
     # Extract control range for each actuator
     control_ranges = model.actuator_ctrlrange
