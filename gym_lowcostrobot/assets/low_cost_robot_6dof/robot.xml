@@ -1,9 +1,11 @@
 <mujoco model="onshape">
   <compiler angle="radian"/>
+
   <default>
     <joint damping="0.2" frictionloss="0.1"/>
-    <position kp="10" forcerange="-10 10"/>
+    <position kp="10000" forcerange="-100 100"/>
   </default>
+
   <asset>
     <mesh name="base" file="base.stl"/>
     <mesh name="dc11_a01_spacer_dummy" file="dc11_a01_spacer_dummy.stl"/>
@@ -20,7 +22,9 @@
     <mesh name="static_side" file="static_side.stl"/>
     <mesh name="moving_side" file="moving_side.stl"/>
   </asset>
+
   <worldbody>
+
     <geom pos="0.0401555 -0.0353754 -0.0242427" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="base"/>
     <geom pos="0.0511555 0.0406246 0.0099573" quat="0 0 0 1" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
     <geom pos="0.0291555 0.000624643 0.0099573" quat="0 0 0 1" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
@@ -31,6 +35,7 @@
     <geom pos="0.0511555 0.0406246 -0.0184427" quat="0 0.707107 -0.707107 0" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
     <geom pos="0.0291555 0.0406246 -0.0184427" quat="0 -1 0 0" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
     <geom pos="0.0511555 0.000624643 0.0099573" quat="0.707107 0 0 0.707107" type="mesh" rgba="0.647059 0.647059 0.647059 1" mesh="dc11_a01_spacer_dummy"/>
+    
     <body name="pitch1_assembly" pos="0.0401555 0.0326246 0.0166573">
       <inertial pos="-0.000767103 -0.0121505 0.0134241" quat="0.498429 0.53272 -0.473938 0.493113" mass="0.0606831" diaginertia="1.86261e-05 1.72746e-05 1.11693e-05"/>
       <joint name="yaw" pos="0 0 0" axis="0 0 1" range="-3.14159 3.14159"/>
@@ -70,7 +75,9 @@
             <geom pos="-7.44154e-06 -0.0385002 0.0133967" quat="0 0 0.707107 -0.707107" type="mesh" rgba="0.980392 0.713726 0.00392157 1" mesh="dc15_a01_case_f_dummy"/>
             <geom pos="-7.44154e-06 -0.0421002 0.0133967" quat="0 1 0 0" type="mesh" rgba="0.972549 0.529412 0.00392157 1" mesh="dc15_a01_horn_dummy"/>
             <geom pos="-7.44154e-06 -0.0190002 0.0133967" quat="0 0 0.707107 -0.707107" type="mesh" rgba="0.498039 0.498039 0.498039 1" mesh="dc15_a01_case_b_dummy"/>
+
             <body name="gripper_assembly" pos="-7.44154e-06 -0.0450002 0.0133967" quat="0.5 -0.5 -0.5 -0.5">
+
               <inertial pos="-0.00548595 -0.000433143 -0.0190793" quat="0.700194 0.164851 0.167361 0.674197" mass="0.0360627" diaginertia="1.3261e-05 1.231e-05 5.3532e-06"/>
               <joint name="effector_roll" pos="0 0 0" axis="0 0 1" range="-2.96706 2.96706" />
               <geom pos="-0.00075 -0.01475 -0.02" quat="0.707107 -0.707107 0 0" type="mesh" rgba="0.917647 0.917647 0.917647 1" mesh="static_side"/>
@@ -79,23 +86,28 @@
               <geom pos="0.00755 -0.00825 -0.013" quat="0.5 0.5 0.5 -0.5" type="mesh" rgba="0.980392 0.713726 0.00392157 1" mesh="dc15_a01_case_f_dummy"/>
               <geom pos="0.00755 -0.01185 -0.013" quat="0 -0.707107 0 -0.707107" type="mesh" rgba="0.972549 0.529412 0.00392157 1" mesh="dc15_a01_horn_dummy"/>
               <geom pos="0.00755 0.01125 -0.013" quat="0.5 0.5 0.5 -0.5" type="mesh" rgba="0.498039 0.498039 0.498039 1" mesh="dc15_a01_case_b_dummy"/>
+
               <body name="moving_side" pos="0.00755 -0.01475 -0.013" quat="0.707107 -0.707107 0 0">
                 <inertial pos="-0.000395599 0.022415 0.0145636" quat="0.722353 0.689129 0.0389102 0.0423547" mass="0.0089856" diaginertia="3.28451e-06 2.24898e-06 1.41539e-06"/>
                 <joint name="gripper_opening" pos="0 0 0" axis="0 0 1" range="-1.74533 0.0523599" />
                 <geom pos="-0.00838199 -0.000256591 -0.003" type="mesh" rgba="0.768627 0.886275 0.952941 1" mesh="moving_side"/>
               </body>
+
             </body>
+
           </body>
         </body>
       </body>
     </body>
   </worldbody>
+
   <actuator>
-    <position name="yaw" joint="yaw" inheritrange="1"/>
-    <position name="pitch1" joint="pitch1" inheritrange="1"/>
-    <position name="pitch2" joint="pitch2" inheritrange="1"/>
-    <position name="pitch3" joint="pitch3" inheritrange="1"/>
-    <position name="effector_roll" joint="effector_roll" inheritrange="1"/>
-    <position name="gripper_opening" joint="gripper_opening" inheritrange="1"/>
+    <position name="yaw" joint="yaw" inheritrange="1"  forcerange="-5000 5000"/>
+    <position name="pitch1" joint="pitch1" inheritrange="1"  forcerange="-50 50"/>
+    <position name="pitch2" joint="pitch2" inheritrange="1"  forcerange="-50 50"/>
+    <position name="pitch3" joint="pitch3" inheritrange="1"  forcerange="-50 50"/>
+    <position name="effector_roll" joint="effector_roll" inheritrange="1"  forcerange="-50 50"/>
+    <position name="gripper_opening" joint="gripper_opening" inheritrange="1"  forcerange="-50 50"/>
   </actuator>
+
 </mujoco>
