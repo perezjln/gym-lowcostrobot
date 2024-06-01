@@ -30,9 +30,9 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
         object_id = "red_box_joint"
         nb_dof = 6
         min_dist = 0.02
-        max_dist = 0.50
-        coef_sample = 2.0
-        min_dist_obj = 0.05
+        max_dist = 0.35
+        coef_sample = 1.2
+        min_dist_obj = 0.01
     else:
         path_scene = "gym_lowcostrobot/assets/low_cost_so_arm100_dof6/scene_so_arm_6dof_one_cube.xml"
         joint_name = "Fixed_Gripper"
@@ -46,6 +46,8 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
     m     = mujoco.MjModel.from_xml_path(path_scene)
     data  = mujoco.MjData(m)
     robot = SimulatedRobot(m, data)
+
+    m.opt.timestep = 1/10000
 
     with mujoco.viewer.launch_passive(m, data) as viewer:
         
@@ -79,9 +81,7 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
             if do_reset:
                 if np.linalg.norm(cube_pos - ee_pos) < min_dist or np.linalg.norm(cube_pos - ee_pos) > max_dist:
                     print("Cube reached the target position")
-                    data.joint(object_id).qpos[:3] = [np.random.rand() * coef_sample + min_dist_obj, np.random.rand() * coef_sample + min_dist_obj, 0.01]
-                    mujoco.mj_step(m, data)
-                    viewer.sync()
+                    displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
 
                     # Rudimentary time keeping, will drift relative to wall clock.
                     time_until_next_step = m.opt.timestep - (time.time() - step_start)
@@ -95,4 +95,4 @@ if __name__ == "__main__":
     parser.add_argument("--robot", choices=["5dof", "6dof", "6dof_soarm"], default="5dof", help="Choose the lowcost robot type")
     args = parser.parse_args()
 
-    do_simple_invk(args.robot, do_reset=False)
+    do_simple_invk(args.robot, do_reset=True)
