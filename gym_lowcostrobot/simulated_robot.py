@@ -100,7 +100,9 @@ class SimulatedRobot:
             raise ValueError(f"Body name '{joint_name}' not found in the model.")
         
         # Get the current end effector position
-        ee_pos = self.d.geom_xpos[joint_id]
+        #ee_pos = self.d.geom_xpos[joint_id]
+        ee_id = self.m.body(joint_name).id
+        ee_pos = self.d.geom_xpos[ee_id]
 
         # Compute the Jacobian
         jac = np.zeros((3, self.m.nv))

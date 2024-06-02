@@ -21,27 +21,27 @@
             <joint axis="0 1 0"/>
             <default class="Shoulder_Rotation">
                 <joint pos="0 0 0" axis="0 1 0" range="-60.14158 60.14158" damping="0.1"/>
-                <position ctrlrange="-60.14158 60.14158" kp="25"/>
+                <position ctrlrange="-60.14158 60.14158" kp="100"/>
             </default>
             <default class="Shoulder_Pitch">
                 <joint pos="0 0 0" axis="0 0 1" range="-2.17 1.1" damping="0.1"/>
-                <position ctrlrange="-2.17 1.1" kp="25"/>
+                <position ctrlrange="-2.17 1.1" kp="100"/>
             </default>
             <default class="Elbow">
                 <joint pos="0 0 0" axis="0 0 1" range="-1.5 2.25" damping="0.1"/>            
-                <position ctrlrange="-1.5 2.25" kp="25"/>
+                <position ctrlrange="-1.5 2.25" kp="100"/>
             </default>
             <default class="Wrist_Pitch">
                 <joint pos="0 0 0" axis="1 0 0" range="-1.95 0.725" damping="0.1"/>
-                <position ctrlrange="-1.95 0.725" kp="25"/>
+                <position ctrlrange="-1.95 0.725" kp="100"/>
             </default>
             <default class="Wrist_Roll">
                 <joint pos="0 0 0" axis="0 0 1" range="-1.5 1.5" damping="0.1"/>            
-                <position ctrlrange="-1.5 1.5" kp="25"/>
+                <position ctrlrange="-1.5 1.5" kp="100"/>
             </default>
             <default class="Gripper">
                 <joint pos="0 0 0" axis="0 0 1" range="0.032 1.5" damping="0.1"/>            
-                <position ctrlrange="0.032 1.5" kp="25"/>
+                <position ctrlrange="0.032 1.5" kp="100"/>
             </default>
         </default>
     </default>
@@ -79,7 +79,11 @@
                 <inertial pos="-0.0033839 -0.0322884 0.000144459" quat="0.677434 0.734389 -0.0310011 -0.0282098" mass="0.0347149" diaginertia="1.37423e-05 8.29829e-06 6.98503e-06"/>
                 <joint name="Gripper" class="Gripper"/>
                 <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="Moving_Jaw"/>
-              
+
+              <body name="Marker" pos="0.0 0.0 0.0">
+                <geom type="sphere" rgba="1 0 0 1" size="0.01 0.01 0.01"/>
+              </body>
+
               </body>
             </body>
           </body>

@@ -7,10 +7,28 @@ import numpy as np
 from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
-def displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer):
-    data.joint(object_id).qpos[:3] = [np.random.rand() * coef_sample + min_dist_obj, np.random.rand() * coef_sample + min_dist_obj, 0.01]
+def displace_object(data, m, object_id, viewer, square_size = 0.2, invert_y=False, origin_pos=[0, 0.1]):
+
+    ### Sample a position in a square in front of the robot
+    if not invert_y:
+        x = np.random.uniform(origin_pos[0] - square_size/2, origin_pos[0] + square_size/2)
+        y = np.random.uniform(origin_pos[1] - square_size/2, origin_pos[1] + square_size/2)
+    else:
+        x = np.random.uniform(origin_pos[0] + square_size/2, origin_pos[0] - square_size/2)
+        y = np.random.uniform(origin_pos[1] + square_size/2, origin_pos[1] - square_size/2)
+
+    #data.joint(object_id).qpos[:3] = [np.random.rand() * coef_sample + min_dist_obj, np.random.rand() * coef_sample + min_dist_obj, 0.01]
+    data.joint(object_id).qpos[:3] = [x, y, 0.01]
+
     mujoco.mj_step(m, data)
     viewer.sync()
+
+
+def do_simple_trajectory_end_effector(current_pos, target_pos):
+        # Define the trajectory
+        nb_points = 10
+        traj = np.linspace(current_pos, target_pos, nb_points)
+        return traj
 
 
 def do_simple_invk(robot_id="5dof", do_reset=False):
@@ -20,10 +38,12 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
         joint_name = "joint5-pad"
         object_id = "red_box_joint"
         nb_dof = 5
-        min_dist = 0.02
-        max_dist = 0.12
-        coef_sample = 0.5
-        min_dist_obj = 0.05
+        min_dist = 0.05
+        max_dist = 0.22
+        invert_y = False
+        square_size = 0.2
+        origin_pos=[0, 0.1]
+
     elif robot_id == "6dof":
         path_scene = "gym_lowcostrobot/assets/low_cost_robot_6dof/scene.xml"
         joint_name = "moving_side"
@@ -31,17 +51,20 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
         nb_dof = 6
         min_dist = 0.02
         max_dist = 0.35
-        coef_sample = 1.2
-        min_dist_obj = 0.01
+        invert_y = False
+        square_size = 0.2
+        origin_pos=[0, 0.2]
+
     else:
         path_scene = "gym_lowcostrobot/assets/low_cost_so_arm100_dof6/scene_so_arm_6dof_one_cube.xml"
         joint_name = "Fixed_Gripper"
         object_id = "red_box_joint"
-        nb_dof = 6
+        nb_dof = 6 
         min_dist = 0.12
         max_dist = 0.30
-        coef_sample = 0.5
-        min_dist_obj = 0.05
+        invert_y = True
+        square_size = 0.2
+        origin_pos=[0, -0.3]
 
     m     = mujoco.MjModel.from_xml_path(path_scene)
     data  = mujoco.MjData(m)
@@ -52,7 +75,8 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
     with mujoco.viewer.launch_passive(m, data) as viewer:
         
         # Get the final position of the cube
-        displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
+        #displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
+        displace_object(data, m, object_id, viewer, invert_y=invert_y, square_size=square_size, origin_pos=origin_pos)
         cube_pos = data.joint(object_id).qpos[:3]
 
         # Run the simulation
@@ -81,7 +105,10 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
             if do_reset:
                 if np.linalg.norm(cube_pos - ee_pos) < min_dist or np.linalg.norm(cube_pos - ee_pos) > max_dist:
                     print("Cube reached the target position")
-                    displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
+
+                    #displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
+                    mujoco.mj_resetData(m, data)
+                    displace_object(data, m, object_id, viewer, invert_y=invert_y, square_size=square_size, origin_pos=origin_pos)
 
                     # Rudimentary time keeping, will drift relative to wall clock.
                     time_until_next_step = m.opt.timestep - (time.time() - step_start)
