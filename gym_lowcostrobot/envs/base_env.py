@@ -8,9 +8,9 @@ from gymnasium import spaces
 
 
 class BaseRobotEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4, "image_state": ["single", "multi"]}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
-    def __init__(self, xml_path, image_state=None, action_mode="joint", render_mode=None):
+    def __init__(self, xml_path, observation_mode="image", action_mode="joint", render_mode=None):
         super().__init__()
 
         # Load the MuJoCo model and data
@@ -23,9 +23,7 @@ class BaseRobotEnv(gym.Env):
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
             self.step_start = time.time()
 
-        assert image_state is None or image_state in self.metadata["image_state"]
-        self.image_state = image_state
-        if self.image_state:
+        if observation_mode in ["image", "both"]:
             self.renderer = mujoco.Renderer(self.model)
 
         self.set_fps(self.metadata["render_fps"])
@@ -57,7 +55,7 @@ class BaseRobotEnv(gym.Env):
             action_size = 5
         return spaces.Box(low=low_action, high=high_action, shape=(action_size,), dtype=np.float32)
 
-
+      
     def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="gripper_opening", nb_joint=6):
         """
         :param ee_target_pos: numpy array of target end effector position
@@ -122,20 +120,6 @@ class BaseRobotEnv(gym.Env):
         mujoco.mj_step(self.model, self.data)
         self.current_step += 1
 
-    def get_info(self):
-        if self.image_state == "single":
-            self.renderer.update_scene(self.data)
-            img = self.renderer.render()
-            info = {"img": img}
-        elif self.image_state == "multi":
-            self.renderer.update_scene(self.data)
-            dict_imgs = self.get_camera_images()
-            info = {"dict_imgs": dict_imgs}
-        else:
-            info = {}
-
-        return info
-
     def set_fps(self, fps):
         if self.render_mode:
             self.model.opt.timestep = 1 / fps
@@ -150,7 +134,7 @@ class BaseRobotEnv(gym.Env):
 
     def get_camera_images(self):
         dict_cams = {}
-        for cam_ids in ["camera_front", "camera_right", "camera_top"]:
+        for cam_ids in ["camera_front", "camera_top"]:
             self.renderer.update_scene(self.data, camera=cam_ids)
             img = self.renderer.render()
             dict_cams[cam_ids] = img
@@ -165,29 +149,18 @@ class BaseRobotEnv(gym.Env):
         self.target_high = np.array([target_xy_range, target_xy_range, 0.05])
 
     def get_observation_dict_one_object(self):
-        if self.image_state:
-            dict_imgs = self.get_camera_images()
-
-        return {
-            "image_front": dict_imgs["camera_front"] if self.image_state else None,
-            "image_top": dict_imgs["camera_top"] if self.image_state else None,
+        observation = {
             "arm_qpos": self.data.qpos[:6].astype(np.float32),
             "arm_qvel": self.data.qvel[:6].astype(np.float32),
-            "object_qpos":  self.data.qpos[6:9].astype(np.float32),
-            "object_qvel":  self.data.qvel[6:9].astype(np.float32),
-            }
+        }
+        if self.observation_mode in ["image", "both"]:
+            dict_imgs = self.get_camera_images()
+            observation["image_front"] = dict_imgs["camera_front"]
+            observation["image_top"] = dict_imgs["camera_top"]
+        if self.observation_mode in ["state", "both"]:
+            observation["object_qpos"] = self.data.qpos[6:9].astype(np.float32)
+            observation["object_qvel"] = self.data.qvel[6:9].astype(np.float32)
 
     def get_observation_dict_two_objects(self):
-        if self.image_state:
-            dict_imgs = self.get_camera_images()
+        raise NotImplementedError()
 
-        return {
-            "image_front": dict_imgs["camera_front"] if self.image_state else None,
-            "image_top": dict_imgs["camera_top"] if self.image_state else None,
-            "arm_qpos": self.data.qpos[:6].astype(np.float32),
-            "arm_qvel": self.data.qvel[:6].astype(np.float32),
-            "object_qpos":  self.data.qpos[6:9].astype(np.float32),
-            "object_qvel":  self.data.qvel[6:9].astype(np.float32),
-            "target_qpos":  self.data.qpos[9:12].astype(np.float32),
-            "target_qvel":  self.data.qvel[9:12].astype(np.float32),
-            }

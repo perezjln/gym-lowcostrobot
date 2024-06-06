@@ -78,12 +78,6 @@ class RecordHDF5Wrapper(gym.Wrapper):
         self.hdf5_folder = os.path.abspath(hdf5_folder)
         self.hdf5_recorder = HDF5_Recorder()
 
-        if env.image_state != "multi":
-            raise ValueError(
-                f"Image state is {env.image_state}, which is incompatible with"
-                f" RecordHDF5Wrapper. Initialize your environment with a image_state == multi"
-            )
-
         # Create output folder if needed
         if os.path.isdir(self.hdf5_folder):
             logger.warn(

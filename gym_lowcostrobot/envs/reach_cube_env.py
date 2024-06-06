@@ -55,10 +55,10 @@ class ReachCubeEnv(BaseRobotEnv):
     distance is less than a threshold.
     """
 
-    def __init__(self, image_state=None, action_mode="joint", render_mode=None, obj_xy_range=0.15):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_one_cube.xml"),
-            image_state=image_state,
+            observation_mode=observation_mode,
             action_mode=action_mode,
             render_mode=render_mode,
         )
@@ -101,10 +101,7 @@ class ReachCubeEnv(BaseRobotEnv):
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        # Get the additional info
-        info = self.get_info()
-
-        return self.get_observation_dict_one_object(), info
+        return self.get_observation_dict_one_object(), {}
 
     def get_observation(self):
         return self.data.qpos[:8].astype(np.float32)
@@ -127,7 +124,4 @@ class ReachCubeEnv(BaseRobotEnv):
         # The episode is terminated if the distance is less than the threshold
         terminated = distance < self.threshold_distance
 
-        # Get the additional info
-        info = self.get_info()
-
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, False, {}

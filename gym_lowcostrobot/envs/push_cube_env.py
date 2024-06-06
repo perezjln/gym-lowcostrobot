@@ -62,10 +62,10 @@ class PushCubeEnv(BaseRobotEnv):
     distance is less than a threshold.
     """
 
-    def __init__(self, image_state=None, action_mode="joint", render_mode=None, target_xy_range=0.2, obj_xy_range=0.2):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, target_xy_range=0.2, obj_xy_range=0.2):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_one_cube.xml"),
-            image_state=image_state,
+            observation_mode=observation_mode,
             action_mode=action_mode,
             render_mode=render_mode,
         )
@@ -111,10 +111,7 @@ class PushCubeEnv(BaseRobotEnv):
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        # Get the additional info
-        info = self.get_info()
-
-        return self.get_observation_dict_one_object(), info
+        return self.get_observation_dict_one_object(), {}
 
     def get_observation(self):
         return np.concatenate([self.data.qpos, self.target_pos], dtype=np.float32)
@@ -137,7 +134,4 @@ class PushCubeEnv(BaseRobotEnv):
         # Check if the target position is reached
         terminated = distance < self.threshold_distance
 
-        # Get the additional info
-        info = self.get_info()
-
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, False, {}

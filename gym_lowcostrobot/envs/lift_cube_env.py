@@ -66,10 +66,10 @@ class LiftCubeEnv(BaseRobotEnv):
     distance.
     """
 
-    def __init__(self, image_state=None, action_mode="joint", render_mode=None, obj_xy_range=0.15):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_one_cube.xml"),
-            image_state=image_state,
+            observation_mode=observation_mode,
             action_mode=action_mode,
             render_mode=render_mode,
         )
@@ -111,10 +111,7 @@ class LiftCubeEnv(BaseRobotEnv):
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        # Get the additional info
-        info = self.get_info()
-
-        return self.get_observation_dict_one_object(), info
+        return self.get_observation_dict_one_object(), {}
 
     def get_observation(self):
         return self.data.qpos.astype(dtype=np.float32)
@@ -135,7 +132,4 @@ class LiftCubeEnv(BaseRobotEnv):
         # Check if the target position is reached
         terminated = object_z > self.threshold_height
 
-        # Get the additional info
-        info = self.get_info()
-
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, False, {}

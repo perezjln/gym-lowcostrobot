@@ -64,10 +64,10 @@ class StackEnv(BaseRobotEnv):
     The reward is 1.0 if the blue cube is above the red cube and close to it, 0.0 otherwise.
     """
 
-    def __init__(self, image_state=None, action_mode="joint", render_mode=None, obj_xy_range=0.15):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_two_cubes.xml"),
-            image_state=image_state,
+            observation_mode=observation_mode,
             action_mode=action_mode,
             render_mode=render_mode,
         )
@@ -90,7 +90,7 @@ class StackEnv(BaseRobotEnv):
             "object_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "target_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "target_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
-            }
+        }
         self.observation_space = gym.spaces.Dict(spaces)
 
         self.threshold_distance = 0.01
@@ -141,7 +141,4 @@ class StackEnv(BaseRobotEnv):
 
         terminated = success
 
-        # Get the additional info
-        info = self.get_info()
-
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, False, {}

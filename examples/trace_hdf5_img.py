@@ -27,5 +27,5 @@ if __name__ == "__main__":
             frames.append([plt.imshow(group_obs_img[i], animated=True)])
 
         ani = animation.ArtistAnimation(fig, frames, interval=50, blit=True, repeat_delay=1000)
-        writer = animation.FFMpegWriter(fps=30, metadata=dict(artist='Me'), bitrate=1800)
+        writer = animation.FFMpegWriter(fps=30, metadata=dict(artist="Me"), bitrate=1800)
         ani.save(args.save_file, writer=writer)

@@ -64,10 +64,10 @@ class PickPlaceCubeEnv(BaseRobotEnv):
     distance is less than a threshold.
     """
 
-    def __init__(self, image_state=None, action_mode="joint", render_mode=None, target_xy_range=0.2, obj_xy_range=0.2):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, target_xy_range=0.2, obj_xy_range=0.2):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_one_cube.xml"),
-            image_state=image_state,
+            observation_mode=observation_mode,
             action_mode=action_mode,
             render_mode=render_mode,
         )
@@ -86,11 +86,13 @@ class PickPlaceCubeEnv(BaseRobotEnv):
             "image_top": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
             "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
             "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(6,)),
+
             "object_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "object_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "target_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "target_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
-            }
+        }
+
         self.observation_space = gym.spaces.Dict(spaces)
 
         self.threshold_distance = 0.02
@@ -115,10 +117,7 @@ class PickPlaceCubeEnv(BaseRobotEnv):
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        # Get the additional info
-        info = self.get_info()
-
-        return self.get_observation_dict_two_objects(), info
+        return self.get_observation_dict_two_objects(), {}
 
     def get_observation(self):
         return np.concatenate([self.data.qpos, self.target_pos], dtype=np.float32)
@@ -141,7 +140,4 @@ class PickPlaceCubeEnv(BaseRobotEnv):
         # Check if the target position is reached
         terminated = distance < self.threshold_distance
 
-        # Get the additional info
-        info = self.get_info()
-
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, False, {}

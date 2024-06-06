@@ -7,7 +7,7 @@ from gym_lowcostrobot.envs.wrappers.record_hdf5 import RecordHDF5Wrapper
 
 
 def do_record_hdf5(args):
-    env = ReachCubeEnv(render_mode=None, image_state="multi", action_mode="ee")
+    env = ReachCubeEnv(render_mode=None, action_mode="ee")
     env = RecordHDF5Wrapper(env, hdf5_folder=args.folder, length=1000, name_prefix="reach")
     env.reset()
 
