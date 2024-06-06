@@ -1,8 +1,8 @@
-from gym_lowcostrobot.envs.stack_env import StackEnv
+from gym_lowcostrobot.envs.push_cube_env import PushCubeEnv
 
 
 def do_env_sim():
-    env = StackEnv(render_mode="human", action_mode="ee")
+    env = PushCubeEnv(render_mode="human", action_mode="ee")
     env.reset()
 
     max_step = 1000000

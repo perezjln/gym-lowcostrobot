@@ -6,80 +6,45 @@ from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
-from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
-from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
+import gymnasium as gym
+from gym_lowcostrobot.envs.push_cube_env import PushCubeEnv
 
 
-def do_td3_reach():
-    env = ReachCubeEnv()
-    env = FilterObservation(env, ["arm_qpos", "object_qpos"])
+def do_td3_push():
+    env = gym.make("PushCube-v0", observation_mode="state", render_mode=None)
+    env = FilterObservation(env, ["arm_qpos", "object_qpos", "target_qpos"])
     env = FlattenObservation(env)
 
     # Define and train the TD3 agent
     model = TD3("MlpPolicy", env, verbose=1)
-    model.learn(total_timesteps=int(1e5), tb_log_name="td3_reach_cube", progress_bar=True)
+    model.learn(total_timesteps=int(1e5), tb_log_name="td3_push_cube", progress_bar=True)
 
     # Evaluate the agent
     mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10)
     print(f"Mean reward: {mean_reward} +/- {std_reward}")
 
 
-def do_ppo_reach(device="cpu", render=True):
+def make_env():
+    env = gym.make("PushCube-v0", observation_mode="state", render_mode=None)
+    env = FilterObservation(env, ["arm_qpos", "object_qpos", "target_qpos"])
+    env = FlattenObservation(env)
+    return env
+
+from stable_baselines3.common.env_util import make_vec_env
+def do_ppo_push(device="cpu", render=True):
     nb_parallel_env = 4
-    envs = SubprocVecEnv(
-        [
-            lambda: FlattenObservation(FilterObservation(ReachCubeEnv(), ["arm_qpos", "object_qpos"]))
-            for _ in range(nb_parallel_env)
-        ]
-    )
+    envs = make_vec_env(make_env, 
+                        n_envs=nb_parallel_env)
 
     # Define and train the TD3 agent
     model = PPO("MlpPolicy", envs, verbose=1, device=device)
-    model.learn(total_timesteps=int(1e3), tb_log_name="ppo_reach_cube", progress_bar=True)
+    model.learn(total_timesteps=int(1e5), tb_log_name="ppo_push_cube", progress_bar=True)
 
     # Evaluate the agent
-    env = FlattenObservation(FilterObservation(ReachCubeEnv(render_mode="human"), ["arm_qpos", "object_qpos"]))
-    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10, render=render)
-    print(f"Mean reward: {mean_reward} +/- {std_reward}")
-
-
-def do_td3_lift():
-    env = LiftCubeEnv()
-    env = FilterObservation(env, ["arm_qpos", "object_qpos"])
-    env = FlattenObservation(env)
-
-    # Define the evaluation callback
-    eval_env = LiftCubeEnv()
-    eval_env = FilterObservation(eval_env, ["arm_qpos", "object_qpos"])
-    eval_env = FlattenObservation(eval_env)
-
-    eval_callback = EvalCallback(eval_env, eval_freq=1000, n_eval_episodes=10, deterministic=True, callback_on_new_best=None)
-
-    # Define and train the TD3 agent
-    model = TD3("MlpPolicy", env, verbose=1)
-    model.learn(total_timesteps=int(1e3), tb_log_name="td3_lift_cube", callback=eval_callback, progress_bar=True)
-
-    # Evaluate the agent
-    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10)
-    print(f"Mean reward: {mean_reward} +/- {std_reward}")
-
-
-def do_ppo_lift():
-    nb_parallel_env = 4
-    envs = SubprocVecEnv(
-        [
-            lambda: FlattenObservation(FilterObservation(LiftCubeEnv(), ["arm_qpos", "object_qpos"]))
-            for _ in range(nb_parallel_env)
-        ]
-    )
-
-    # Define and train the TD3 agent
-    model = PPO("MlpPolicy", envs, verbose=1)
-    model.learn(total_timesteps=int(1e3), tb_log_name="ppo_lift_cube", progress_bar=True)
-
-    # Evaluate the agent
-    env = FlattenObservation(FilterObservation(LiftCubeEnv(render_mode="human"), ["arm_qpos", "object_qpos"]))
-    mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10)
+    env_test = gym.make("PushCube-v0", observation_mode="state", render_mode=None)
+    env_test = FilterObservation(env_test, ["arm_qpos", "object_qpos", "target_qpos"])
+    env_test = FlattenObservation(env_test)
+    mean_reward, std_reward = evaluate_policy(model, env_test, n_eval_episodes=10, render=render)
     print(f"Mean reward: {mean_reward} +/- {std_reward}")
 
 
@@ -88,4 +53,4 @@ if __name__ == "__main__":
     print("Available devices:")
     print(torch.cuda.device_count())
 
-    do_td3_lift()
+    do_ppo_push()

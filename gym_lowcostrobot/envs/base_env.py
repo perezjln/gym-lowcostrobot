@@ -27,7 +27,7 @@ class BaseRobotEnv(gym.Env):
         if observation_mode in ["image", "both"]:
             self.renderer = mujoco.Renderer(self.model)
 
-        self.set_fps(self.metadata["render_fps"])
+        #self.set_fps(self.metadata["render_fps"])
 
         self.action_mode = action_mode
         self.current_step = 0

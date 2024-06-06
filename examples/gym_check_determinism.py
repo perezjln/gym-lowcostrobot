@@ -6,16 +6,16 @@ import gym_lowcostrobot  # noqa
 
 if __name__ == "__main__":
     for env_name in [
-        "LiftCube-v0",
-        "PickPlaceCube-v0",
+        #"LiftCube-v0",
+        #"PickPlaceCube-v0",
         "PushCube-v0",
-        "ReachCube-v0",
-        "Stack-v0",
+        #"ReachCube-v0",
+        #"Stack-v0",
     ]:
 
         print(env_name)        
         env = gymnasium.make(env_name)
-        env = FilterObservation(env, ["arm_qpos", "object_qpos"])
+        env = FilterObservation(env, ["arm_qpos"])
         env = FlattenObservation(env)
 
         observation1, info = env.reset(seed=123)

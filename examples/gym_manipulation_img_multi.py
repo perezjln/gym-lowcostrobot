@@ -1,21 +1,20 @@
 import matplotlib.pyplot as plt
 
-from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
-
+from gym_lowcostrobot.envs.push_cube_env import PushCubeEnv
 
 def do_env_sim_image():
-    env = LiftCubeEnv(render_mode=None)
+    env = PushCubeEnv(render_mode=None)
     env.reset()
 
     max_step = 1000
     for _ in range(max_step):
         action = env.action_space.sample()
-        _, _, terminated, truncated, info = env.step(action)
+        obs, _, terminated, truncated, _ = env.step(action)
 
-        for key, img in info["dict_imgs"].items():
-            print(key)
-            plt.imshow(img)
-            plt.show()
+        for key in ["image_front", "image_top"]:
+                print(key)
+                plt.imshow(obs[key])
+                plt.show()
 
         if terminated or truncated:
             env.reset()
