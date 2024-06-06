@@ -3,7 +3,7 @@
 
   <default>
     <joint damping="0.2" frictionloss="0.1"/>
-    <position kp="10000" forcerange="-100 100"/>
+    <position kp="100" forcerange="-100 100"/>
   </default>
 
   <asset>

@@ -31,21 +31,10 @@ def do_simple_trajectory_end_effector(current_pos, target_pos):
         return traj
 
 
-def do_simple_invk(robot_id="5dof", do_reset=False):
+def do_simple_invk(robot_id="6dof", do_reset=False):
 
-    if robot_id == "5dof":
-        path_scene = "gym_lowcostrobot/assets/low_cost_robot_5dof/scene_one_cube.xml"
-        joint_name = "joint5-pad"
-        object_id = "red_box_joint"
-        nb_dof = 5
-        min_dist = 0.05
-        max_dist = 0.22
-        invert_y = False
-        square_size = 0.2
-        origin_pos=[0, 0.1]
-
-    elif robot_id == "6dof":
-        path_scene = "gym_lowcostrobot/assets/low_cost_robot_6dof/scene.xml"
+    if robot_id == "6dof":
+        path_scene = "gym_lowcostrobot/assets/low_cost_robot_6dof/scene_one_cube.xml"
         joint_name = "moving_side"
         object_id = "red_box_joint"
         nb_dof = 6
@@ -54,17 +43,8 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
         invert_y = False
         square_size = 0.2
         origin_pos=[0, 0.2]
-
     else:
-        path_scene = "gym_lowcostrobot/assets/low_cost_so_arm100_dof6/scene_so_arm_6dof_one_cube.xml"
-        joint_name = "Fixed_Gripper"
-        object_id = "red_box_joint"
-        nb_dof = 6 
-        min_dist = 0.12
-        max_dist = 0.30
-        invert_y = True
-        square_size = 0.2
-        origin_pos=[0, -0.3]
+        return
 
     m     = mujoco.MjModel.from_xml_path(path_scene)
     data  = mujoco.MjData(m)
@@ -119,7 +99,7 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Choose between 5dof and 6dof lowcost robot simulation.")
-    parser.add_argument("--robot", choices=["5dof", "6dof", "6dof_soarm"], default="5dof", help="Choose the lowcost robot type")
+    parser.add_argument("--robot", choices=["6dof"], default="6dof", help="Choose the lowcost robot type")
     args = parser.parse_args()
 
     do_simple_invk(args.robot, do_reset=True)
