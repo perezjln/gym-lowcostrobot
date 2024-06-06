@@ -1,11 +1,9 @@
 import os
 
+import gymnasium as gym
 import mujoco
 import mujoco.viewer
 import numpy as np
-
-import gymnasium as gym
-from gymnasium import spaces
 
 from gym_lowcostrobot import ASSETS_PATH
 from gym_lowcostrobot.envs.base_env import BaseRobotEnv
@@ -74,21 +72,20 @@ class PushCubeEnv(BaseRobotEnv):
 
         # Define the action space and observation space
         self.action_space = self.set_action_space_without_gripper()
-        
 
         """
         low = [-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0]  # ruff: noqa: E501
         high = [np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0]  # ruff: noqa: E501
         self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)
         """
-        
+
         spaces = {
-            "image_front":  gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
-            "image_top":  gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
+            "image_front": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
+            "image_top": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
             "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(5,)),
             "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(5,)),
-            "object_qpos":  gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
-            "object_qvel":  gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
+            "object_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
+            "object_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
         }
         self.observation_space = gym.spaces.Dict(spaces)
 
@@ -114,10 +111,7 @@ class PushCubeEnv(BaseRobotEnv):
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        # Get the additional info
-        info = self.get_info()
-
-        return self.get_observation_dict_one_object(), info
+        return self.get_observation_dict_one_object(), {}
 
     def get_observation(self):
         return np.concatenate([self.data.qpos, self.target_pos], dtype=np.float32)
@@ -140,7 +134,4 @@ class PushCubeEnv(BaseRobotEnv):
         # Check if the target position is reached
         terminated = distance < self.threshold_distance
 
-        # Get the additional info
-        info = self.get_info()
-
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, False, {}

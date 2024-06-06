@@ -1,11 +1,11 @@
 import time
 
 import gymnasium as gym
-from gymnasium import spaces
-
 import mujoco
 import mujoco.viewer
 import numpy as np
+from gymnasium import spaces
+
 
 class BaseRobotEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4, "image_state": ["single", "multi"]}
@@ -56,7 +56,6 @@ class BaseRobotEnv(gym.Env):
             high_action = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
             action_size = 4
         return spaces.Box(low=low_action, high=high_action, shape=(action_size,), dtype=np.float32)
-
 
     def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="end_effector", nb_joint=5):
         """
@@ -122,20 +121,6 @@ class BaseRobotEnv(gym.Env):
         mujoco.mj_step(self.model, self.data)
         self.current_step += 1
 
-    def get_info(self):
-        if self.image_state == "single":
-            self.renderer.update_scene(self.data)
-            img = self.renderer.render()
-            info = {"img": img}
-        elif self.image_state == "multi":
-            self.renderer.update_scene(self.data)
-            dict_imgs = self.get_camera_images()
-            info = {"dict_imgs": dict_imgs}
-        else:
-            info = {}
-
-        return info
-
     def set_fps(self, fps):
         if self.render_mode:
             self.model.opt.timestep = 1 / fps
@@ -165,32 +150,29 @@ class BaseRobotEnv(gym.Env):
         self.target_high = np.array([target_xy_range, target_xy_range, 0.05])
 
     def get_observation_dict_one_object(self):
-
         if self.image_state:
             dict_imgs = self.get_camera_images()
 
         return {
-            "image_front": dict_imgs['camera_front'] if self.image_state else None,
-            "image_top": dict_imgs['camera_top'] if self.image_state else None,
+            "image_front": dict_imgs["camera_front"] if self.image_state else None,
+            "image_top": dict_imgs["camera_top"] if self.image_state else None,
             "arm_qpos": self.data.qpos[:5].astype(np.float32),
             "arm_qvel": self.data.qvel[:5].astype(np.float32),
-            "object_qpos":  self.data.qpos[5:8].astype(np.float32),
-            "object_qvel":  self.data.qvel[5:8].astype(np.float32),
-            }
+            "object_qpos": self.data.qpos[5:8].astype(np.float32),
+            "object_qvel": self.data.qvel[5:8].astype(np.float32),
+        }
 
     def get_observation_dict_two_objects(self):
-
         if self.image_state:
             dict_imgs = self.get_camera_images()
 
         return {
-            "image_front": dict_imgs['camera_front'] if self.image_state else None,
-            "image_top": dict_imgs['camera_top'] if self.image_state else None,
+            "image_front": dict_imgs["camera_front"] if self.image_state else None,
+            "image_top": dict_imgs["camera_top"] if self.image_state else None,
             "arm_qpos": self.data.qpos[:5].astype(np.float32),
             "arm_qvel": self.data.qvel[:5].astype(np.float32),
-            "object_qpos":  self.data.qpos[5:8].astype(np.float32),
-            "object_qvel":  self.data.qvel[5:8].astype(np.float32),
-            "target_qpos":  self.data.qpos[8:11].astype(np.float32),
-            "target_qvel":  self.data.qvel[8:11].astype(np.float32),
-            }
-    
+            "object_qpos": self.data.qpos[5:8].astype(np.float32),
+            "object_qvel": self.data.qvel[5:8].astype(np.float32),
+            "target_qpos": self.data.qpos[8:11].astype(np.float32),
+            "target_qvel": self.data.qvel[8:11].astype(np.float32),
+        }
