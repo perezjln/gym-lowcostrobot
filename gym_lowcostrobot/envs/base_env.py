@@ -38,9 +38,9 @@ class BaseRobotEnv(gym.Env):
             high_action = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
             action_size = 3 + 1
         else:
-            low_action = np.array([-1.0, -1.0, -1.0, -1.0, -1.0], dtype=np.float32)
-            high_action = np.array([1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32)
-            action_size = 5
+            low_action = np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0], dtype=np.float32)
+            high_action = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+            action_size = 6
         return spaces.Box(low=low_action, high=high_action, shape=(action_size,), dtype=np.float32)
 
     def set_action_space_without_gripper(self):
@@ -50,12 +50,13 @@ class BaseRobotEnv(gym.Env):
             high_action = np.array([1.0, 1.0, 1.0], dtype=np.float32)
             action_size = 3
         else:
-            low_action = np.array([-1.0, -1.0, -1.0, -1.0], dtype=np.float32)
-            high_action = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
-            action_size = 4
+            low_action = np.array([-1.0, -1.0, -1.0, -1.0, -1.0], dtype=np.float32)
+            high_action = np.array([1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+            action_size = 5
         return spaces.Box(low=low_action, high=high_action, shape=(action_size,), dtype=np.float32)
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="end_effector", nb_joint=5):
+      
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="gripper_opening", nb_joint=6):
         """
         :param ee_target_pos: numpy array of target end effector position
         :param joint_name: name of the end effector joint
@@ -83,7 +84,7 @@ class BaseRobotEnv(gym.Env):
     def get_actuator_ranges(self):
         return self.model.actuator_ctrlrange
 
-    def base_step_action_nograsp(self, action, joint_name="joint5-pad"):
+    def base_step_action_nograsp(self, action, joint_name="moving_side"):
         if self.action_mode == "ee":
             # Update the robot position based on the action
             ee_id = self.model.body(joint_name).id
@@ -102,7 +103,7 @@ class BaseRobotEnv(gym.Env):
         mujoco.mj_step(self.model, self.data)
         self.current_step += 1
 
-    def base_step_action_withgrasp(self, action, joint_name="joint5-pad"):
+    def base_step_action_withgrasp(self, action, joint_name="moving_side"):
         if self.action_mode == "ee":
             # Update the robot position based on the action
             ee_id = self.model.body(joint_name).id
@@ -149,28 +150,17 @@ class BaseRobotEnv(gym.Env):
 
     def get_observation_dict_one_object(self):
         observation = {
-            "arm_qpos": self.data.qpos[:5].astype(np.float32),
-            "arm_qvel": self.data.qvel[:5].astype(np.float32),
+            "arm_qpos": self.data.qpos[:6].astype(np.float32),
+            "arm_qvel": self.data.qvel[:6].astype(np.float32),
         }
         if self.observation_mode in ["image", "both"]:
             dict_imgs = self.get_camera_images()
             observation["image_front"] = dict_imgs["camera_front"]
             observation["image_top"] = dict_imgs["camera_top"]
         if self.observation_mode in ["state", "both"]:
-            observation["object_qpos"] = self.data.qpos[5:8].astype(np.float32)
-            observation["object_qvel"] = self.data.qvel[5:8].astype(np.float32)
+            observation["object_qpos"] = self.data.qpos[6:9].astype(np.float32)
+            observation["object_qvel"] = self.data.qvel[6:9].astype(np.float32)
 
     def get_observation_dict_two_objects(self):
         raise NotImplementedError()
-        observation = {
-            "arm_qpos": self.data.qpos[:5].astype(np.float32),
-            "arm_qvel": self.data.qvel[:5].astype(np.float32),
-        }
-        if self.observation_mode in ["image", "both"]:
-            dict_imgs = self.get_camera_images()
-            observation["image_front"] = dict_imgs["camera_front"]
-            observation["image_top"] = dict_imgs["camera_top"]
-        if self.observation_mode in ["state", "both"]:
-            for obj in ["red_box_joint", "blue_box_joint"]:
-                observation[f"{obj}_qpos"] = self.data.joint(obj).qpos[:3].astype(np.float32)
-                observation[f"{obj}_qvel"] = self.data.joint(obj).qvel[:3].astype(np.float32)
+

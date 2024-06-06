@@ -86,8 +86,8 @@ class LiftCubeEnv(BaseRobotEnv):
         spaces = {
             "image_front": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
             "image_top": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
-            "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(5,)),
-            "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(5,)),
+            "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
+            "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(6,)),
             "object_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "object_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
         }
@@ -101,12 +101,12 @@ class LiftCubeEnv(BaseRobotEnv):
         super().reset(seed=seed, options=options)
 
         # Reset the robot to the initial position
-        self.data.qpos[:5] = np.array([0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+        self.data.qpos[:6] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
 
         # Sample and set the object position
         object_pos = self.np_random.uniform(self.object_low, self.object_high).astype(np.float32)
         object_rot = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
-        self.data.qpos[5:12] = np.concatenate([object_pos, object_rot])
+        self.data.qpos[6:13] = np.concatenate([object_pos, object_rot])
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -124,7 +124,7 @@ class LiftCubeEnv(BaseRobotEnv):
         observation = self.get_observation_dict_one_object()
 
         # Get the height of the object
-        object_z = self.data.qpos[7]
+        object_z = self.data.qpos[8]
 
         # Compute the reward
         reward = object_z

@@ -75,8 +75,8 @@ class ReachCubeEnv(BaseRobotEnv):
         spaces = {
             "image_front": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
             "image_top": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
-            "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(5,)),
-            "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(5,)),
+            "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
+            "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(6,)),
             "object_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "object_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
         }
@@ -91,12 +91,12 @@ class ReachCubeEnv(BaseRobotEnv):
         super().reset(seed=seed, options=options)
 
         # Reset the robot to the initial position
-        self.data.qpos[:5] = np.array([0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+        self.data.qpos[:6] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
 
         # Sample and set the object position
         object_pos = self.np_random.uniform(self.object_low, self.object_high).astype(np.float32)
         object_rot = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
-        self.data.qpos[5:12] = np.concatenate([object_pos, object_rot])
+        self.data.qpos[6:13] = np.concatenate([object_pos, object_rot])
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -115,7 +115,7 @@ class ReachCubeEnv(BaseRobotEnv):
 
         # Compute the distance between the cube and the end-effector
         cube_pos = self.data.joint("red_box_joint").qpos[:3]
-        ee_pos = self.data.joint("joint5").qpos[:3]
+        ee_pos = self.data.joint("gripper_opening").qpos[:3]
         distance = np.linalg.norm(cube_pos - ee_pos)
 
         # Compute the reward based on the distance

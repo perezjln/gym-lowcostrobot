@@ -84,8 +84,8 @@ class StackEnv(BaseRobotEnv):
         spaces = {
             "image_front": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
             "image_top": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
-            "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(5,)),
-            "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(5,)),
+            "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
+            "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(6,)),
             "object_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "object_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
             "target_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
@@ -93,7 +93,7 @@ class StackEnv(BaseRobotEnv):
         }
         self.observation_space = gym.spaces.Dict(spaces)
 
-        self.threshold_distance = 0.05
+        self.threshold_distance = 0.01
         self.set_object_range(obj_xy_range)
 
     def reset(self, seed=None, options=None):
@@ -101,7 +101,7 @@ class StackEnv(BaseRobotEnv):
         super().reset(seed=seed, options=options)
 
         # Reset the robot to the initial position
-        self.data.qpos[:5] = np.array([0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+        self.data.qpos[:6] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
 
         # Sample and set the object position
         for obj in ["red_box_joint", "blue_box_joint"]:
@@ -128,9 +128,9 @@ class StackEnv(BaseRobotEnv):
         observation = self.get_observation_dict_two_objects()
 
         # Check if the stack is successful
-        cube1_id = self.model.body("box1").id
+        cube1_id = self.model.body("box").id
         cube1_pos = self.data.geom_xpos[cube1_id]
-        cube2_id = self.model.body("box2").id
+        cube2_id = self.model.body("box_two").id
         cube2_pos = self.data.geom_xpos[cube2_id]
         is_2_above_1 = cube1_pos[2] < cube2_pos[2]
         is_2_close_to_1 = np.linalg.norm(cube1_pos[0:2] - cube2_pos[0:2]) < self.threshold_distance
