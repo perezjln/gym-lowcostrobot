@@ -1,4 +1,5 @@
-import time, argparse
+import argparse
+import time
 
 import mujoco
 import mujoco.viewer
@@ -7,17 +8,16 @@ import numpy as np
 from gym_lowcostrobot.simulated_robot import SimulatedRobot
 
 
-def displace_object(data, m, object_id, viewer, square_size = 0.2, invert_y=False, origin_pos=[0, 0.1]):
-
+def displace_object(data, m, object_id, viewer, square_size=0.2, invert_y=False, origin_pos=[0, 0.1]):
     ### Sample a position in a square in front of the robot
     if not invert_y:
-        x = np.random.uniform(origin_pos[0] - square_size/2, origin_pos[0] + square_size/2)
-        y = np.random.uniform(origin_pos[1] - square_size/2, origin_pos[1] + square_size/2)
+        x = np.random.uniform(origin_pos[0] - square_size / 2, origin_pos[0] + square_size / 2)
+        y = np.random.uniform(origin_pos[1] - square_size / 2, origin_pos[1] + square_size / 2)
     else:
-        x = np.random.uniform(origin_pos[0] + square_size/2, origin_pos[0] - square_size/2)
-        y = np.random.uniform(origin_pos[1] + square_size/2, origin_pos[1] - square_size/2)
+        x = np.random.uniform(origin_pos[0] + square_size / 2, origin_pos[0] - square_size / 2)
+        y = np.random.uniform(origin_pos[1] + square_size / 2, origin_pos[1] - square_size / 2)
 
-    #data.joint(object_id).qpos[:3] = [np.random.rand() * coef_sample + min_dist_obj, np.random.rand() * coef_sample + min_dist_obj, 0.01]
+    # data.joint(object_id).qpos[:3] = [np.random.rand() * coef_sample + min_dist_obj, np.random.rand() * coef_sample + min_dist_obj, 0.01]
     data.joint(object_id).qpos[:3] = [x, y, 0.01]
 
     mujoco.mj_step(m, data)
@@ -25,14 +25,13 @@ def displace_object(data, m, object_id, viewer, square_size = 0.2, invert_y=Fals
 
 
 def do_simple_trajectory_end_effector(current_pos, target_pos):
-        # Define the trajectory
-        nb_points = 10
-        traj = np.linspace(current_pos, target_pos, nb_points)
-        return traj
+    # Define the trajectory
+    nb_points = 10
+    traj = np.linspace(current_pos, target_pos, nb_points)
+    return traj
 
 
 def do_simple_invk(robot_id="5dof", do_reset=False):
-
     if robot_id == "5dof":
         path_scene = "gym_lowcostrobot/assets/low_cost_robot_5dof/scene_one_cube.xml"
         joint_name = "joint5-pad"
@@ -42,7 +41,7 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
         max_dist = 0.22
         invert_y = False
         square_size = 0.2
-        origin_pos=[0, 0.1]
+        origin_pos = [0, 0.1]
 
     elif robot_id == "6dof":
         path_scene = "gym_lowcostrobot/assets/low_cost_robot_6dof/scene.xml"
@@ -53,35 +52,33 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
         max_dist = 0.35
         invert_y = False
         square_size = 0.2
-        origin_pos=[0, 0.2]
+        origin_pos = [0, 0.2]
 
     else:
         path_scene = "gym_lowcostrobot/assets/low_cost_so_arm100_dof6/scene_so_arm_6dof_one_cube.xml"
         joint_name = "Fixed_Gripper"
         object_id = "red_box_joint"
-        nb_dof = 6 
+        nb_dof = 6
         min_dist = 0.12
         max_dist = 0.30
         invert_y = True
         square_size = 0.2
-        origin_pos=[0, -0.3]
+        origin_pos = [0, -0.3]
 
-    m     = mujoco.MjModel.from_xml_path(path_scene)
-    data  = mujoco.MjData(m)
+    m = mujoco.MjModel.from_xml_path(path_scene)
+    data = mujoco.MjData(m)
     robot = SimulatedRobot(m, data)
 
-    m.opt.timestep = 1/10000
+    m.opt.timestep = 1 / 10000
 
     with mujoco.viewer.launch_passive(m, data) as viewer:
-        
         # Get the final position of the cube
-        #displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
+        # displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
         displace_object(data, m, object_id, viewer, invert_y=invert_y, square_size=square_size, origin_pos=origin_pos)
         cube_pos = data.joint(object_id).qpos[:3]
 
         # Run the simulation
         while viewer.is_running():
-
             step_start = time.time()
             q_target_pos = robot.inverse_kinematics_reg(ee_target_pos=cube_pos, joint_name=joint_name, nb_dof=nb_dof, step=0.2)
             q_target_pos[-1] = 0.0
@@ -106,9 +103,11 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
                 if np.linalg.norm(cube_pos - ee_pos) < min_dist or np.linalg.norm(cube_pos - ee_pos) > max_dist:
                     print("Cube reached the target position")
 
-                    #displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
+                    # displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
                     mujoco.mj_resetData(m, data)
-                    displace_object(data, m, object_id, viewer, invert_y=invert_y, square_size=square_size, origin_pos=origin_pos)
+                    displace_object(
+                        data, m, object_id, viewer, invert_y=invert_y, square_size=square_size, origin_pos=origin_pos
+                    )
 
                     # Rudimentary time keeping, will drift relative to wall clock.
                     time_until_next_step = m.opt.timestep - (time.time() - step_start)
@@ -117,9 +116,10 @@ def do_simple_invk(robot_id="5dof", do_reset=False):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Choose between 5dof and 6dof lowcost robot simulation.")
-    parser.add_argument("--robot", choices=["5dof", "6dof", "6dof_soarm"], default="5dof", help="Choose the lowcost robot type")
+    parser.add_argument(
+        "--robot", choices=["5dof", "6dof", "6dof_soarm"], default="5dof", help="Choose the lowcost robot type"
+    )
     args = parser.parse_args()
 
     do_simple_invk(args.robot, do_reset=True)

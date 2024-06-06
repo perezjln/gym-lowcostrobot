@@ -85,7 +85,7 @@ class SimulatedRobot:
     def inverse_kinematics_reg(self, ee_target_pos, step=0.2, joint_name="end_effector", nb_dof=5, regularization=1e-6):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
-        
+
         :param ee_target_pos: numpy array of target end effector position [x, y, z]
         :param step: float, step size for the iteration
         :param joint_name: str, name of the end effector joint
@@ -98,9 +98,9 @@ class SimulatedRobot:
             joint_id = self.m.body(joint_name).id
         except KeyError:
             raise ValueError(f"Body name '{joint_name}' not found in the model.")
-        
+
         # Get the current end effector position
-        #ee_pos = self.d.geom_xpos[joint_id]
+        # ee_pos = self.d.geom_xpos[joint_id]
         ee_id = self.m.body(joint_name).id
         ee_pos = self.d.geom_xpos[ee_id]
 

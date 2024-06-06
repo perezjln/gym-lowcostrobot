@@ -15,7 +15,7 @@ def do_replay_hdf5(args):
         data = mujoco.MjData(m)
         robot = SimulatedRobot(m, data)
 
-        group_action = file["action"]
+        # group_action = file["action"]
         group_qpos = file["observations/qpos"]
 
         with mujoco.viewer.launch_passive(m, data) as viewer:
@@ -35,10 +35,9 @@ def do_replay_hdf5(args):
                 if time_until_next_step > 0:
                     time.sleep(time_until_next_step)
 
-
                 step += 1
                 print(group_qpos[step][0:6])
-                #step = step % len(group_qpos)
+                # step = step % len(group_qpos)
 
 
 if __name__ == "__main__":

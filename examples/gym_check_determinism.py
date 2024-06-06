@@ -1,9 +1,6 @@
-
 import gymnasium
 from gymnasium.wrappers.filter_observation import FilterObservation
 from gymnasium.wrappers.flatten_observation import FlattenObservation
-
-import gym_lowcostrobot
 
 if __name__ == "__main__":
     for env_name in [

@@ -8,9 +8,9 @@ from gymnasium import spaces
 
 
 class BaseRobotEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4, "image_state": ["single", "multi"]}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
-    def __init__(self, xml_path, image_state=None, action_mode="joint", render_mode=None):
+    def __init__(self, xml_path, action_mode="joint", render_mode=None):
         super().__init__()
 
         # Load the MuJoCo model and data
@@ -23,10 +23,7 @@ class BaseRobotEnv(gym.Env):
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
             self.step_start = time.time()
 
-        assert image_state is None or image_state in self.metadata["image_state"]
-        self.image_state = image_state
-        if self.image_state:
-            self.renderer = mujoco.Renderer(self.model)
+        self.renderer = mujoco.Renderer(self.model)
 
         self.set_fps(self.metadata["render_fps"])
 
@@ -150,12 +147,11 @@ class BaseRobotEnv(gym.Env):
         self.target_high = np.array([target_xy_range, target_xy_range, 0.05])
 
     def get_observation_dict_one_object(self):
-        if self.image_state:
-            dict_imgs = self.get_camera_images()
+        dict_imgs = self.get_camera_images()
 
         return {
-            "image_front": dict_imgs["camera_front"] if self.image_state else None,
-            "image_top": dict_imgs["camera_top"] if self.image_state else None,
+            "image_front": dict_imgs["camera_front"],
+            "image_top": dict_imgs["camera_top"],
             "arm_qpos": self.data.qpos[:5].astype(np.float32),
             "arm_qvel": self.data.qvel[:5].astype(np.float32),
             "object_qpos": self.data.qpos[5:8].astype(np.float32),
@@ -163,12 +159,11 @@ class BaseRobotEnv(gym.Env):
         }
 
     def get_observation_dict_two_objects(self):
-        if self.image_state:
-            dict_imgs = self.get_camera_images()
+        dict_imgs = self.get_camera_images()
 
         return {
-            "image_front": dict_imgs["camera_front"] if self.image_state else None,
-            "image_top": dict_imgs["camera_top"] if self.image_state else None,
+            "image_front": dict_imgs["camera_front"],
+            "image_top": dict_imgs["camera_top"],
             "arm_qpos": self.data.qpos[:5].astype(np.float32),
             "arm_qvel": self.data.qvel[:5].astype(np.float32),
             "object_qpos": self.data.qpos[5:8].astype(np.float32),

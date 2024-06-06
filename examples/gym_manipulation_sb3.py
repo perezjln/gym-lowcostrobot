@@ -1,5 +1,6 @@
 import torch
-
+from gymnasium.wrappers.filter_observation import FilterObservation
+from gymnasium.wrappers.flatten_observation import FlattenObservation
 from stable_baselines3 import PPO, TD3
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -8,11 +9,8 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from gym_lowcostrobot.envs.lift_cube_env import LiftCubeEnv
 from gym_lowcostrobot.envs.reach_cube_env import ReachCubeEnv
 
-from gymnasium.wrappers.filter_observation import FilterObservation
-from gymnasium.wrappers.flatten_observation import FlattenObservation
 
 def do_td3_reach():
-
     env = ReachCubeEnv()
     env = FilterObservation(env, ["arm_qpos", "object_qpos"])
     env = FlattenObservation(env)
@@ -29,7 +27,10 @@ def do_td3_reach():
 def do_ppo_reach(device="cpu", render=True):
     nb_parallel_env = 4
     envs = SubprocVecEnv(
-        [lambda: FlattenObservation(FilterObservation(ReachCubeEnv(), ["arm_qpos", "object_qpos"])) for _ in range(nb_parallel_env)]
+        [
+            lambda: FlattenObservation(FilterObservation(ReachCubeEnv(), ["arm_qpos", "object_qpos"]))
+            for _ in range(nb_parallel_env)
+        ]
     )
 
     # Define and train the TD3 agent
@@ -52,9 +53,7 @@ def do_td3_lift():
     eval_env = FilterObservation(eval_env, ["arm_qpos", "object_qpos"])
     eval_env = FlattenObservation(eval_env)
 
-    eval_callback = EvalCallback(
-        eval_env, eval_freq=1000, n_eval_episodes=10, deterministic=True, callback_on_new_best=None
-    )
+    eval_callback = EvalCallback(eval_env, eval_freq=1000, n_eval_episodes=10, deterministic=True, callback_on_new_best=None)
 
     # Define and train the TD3 agent
     model = TD3("MlpPolicy", env, verbose=1)
@@ -69,7 +68,8 @@ def do_ppo_lift():
     nb_parallel_env = 4
     envs = SubprocVecEnv(
         [
-            lambda: FlattenObservation(FilterObservation(LiftCubeEnv(), ["arm_qpos", "object_qpos"])) for _ in range(nb_parallel_env)
+            lambda: FlattenObservation(FilterObservation(LiftCubeEnv(), ["arm_qpos", "object_qpos"]))
+            for _ in range(nb_parallel_env)
         ]
     )
 

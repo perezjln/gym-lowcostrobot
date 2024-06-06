@@ -6,7 +6,6 @@ import mujoco.viewer
 
 
 def do_interactive_sim(robot_id):
-
     if robot_id == "5dof":
         m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_robot_5dof/scene_one_cube.xml")
     elif robot_id == "6dof":
@@ -33,6 +32,8 @@ def do_interactive_sim(robot_id):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Choose between 5dof and 6dof lowcost robot simulation.")
-    parser.add_argument("--robot", choices=["5dof", "6dof", "6dof_soarm"], default="5dof", help="Choose the lowcost robot type")
+    parser.add_argument(
+        "--robot", choices=["5dof", "6dof", "6dof_soarm"], default="5dof", help="Choose the lowcost robot type"
+    )
     args = parser.parse_args()
     do_interactive_sim(args.robot)
