@@ -66,10 +66,10 @@ class LiftCubeEnv(BaseRobotEnv):
     distance.
     """
 
-    def __init__(self, image_state=None, action_mode="joint", render_mode=None, obj_xy_range=0.15):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_one_cube.xml"),
-            image_state=image_state,
+            observation_mode=observation_mode,
             action_mode=action_mode,
             render_mode=render_mode,
         )

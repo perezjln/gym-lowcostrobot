@@ -64,9 +64,10 @@ class StackEnv(BaseRobotEnv):
     The reward is 1.0 if the blue cube is above the red cube and close to it, 0.0 otherwise.
     """
 
-    def __init__(self, action_mode="joint", render_mode=None, obj_xy_range=0.15):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, obj_xy_range=0.15):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_two_cubes.xml"),
+            observation_mode=observation_mode,
             action_mode=action_mode,
             render_mode=render_mode,
         )
