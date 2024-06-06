@@ -78,17 +78,19 @@ class PushCubeEnv(BaseRobotEnv):
         high = [np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0]  # ruff: noqa: E501
         self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)
         """
-
         spaces = {
-            "image_front": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
-            "image_top": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3)),
             "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
             "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(6,)),
-            "object_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
-            "object_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
+            "target_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
         }
-        self.observation_space = gym.spaces.Dict(spaces)
+        if observation_mode in ["image", "both"]:
+            spaces["image_front"] = gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3))
+            spaces["image_top"] = gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3))
+        if observation_mode in ["state", "both"]:
+            spaces["object_qpos"] = gym.spaces.Box(low=-10.0, high=10.0, shape=(3,))
+            spaces["object_qvel"] = gym.spaces.Box(low=-10.0, high=10.0, shape=(3,))
 
+        self.observation_space = gym.spaces.Dict(spaces)
         self.threshold_distance = 0.015
         self.set_object_range(obj_xy_range)
         self.set_target_range(target_xy_range)
@@ -111,7 +113,9 @@ class PushCubeEnv(BaseRobotEnv):
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        return self.get_observation_dict_one_object(), {}
+        observation = self.get_observation_dict_one_object()
+        observation["target_qpos"] = self.target_pos
+        return observation, {}
 
     def get_observation(self):
         return np.concatenate([self.data.qpos, self.target_pos], dtype=np.float32)
@@ -122,6 +126,7 @@ class PushCubeEnv(BaseRobotEnv):
 
         # Get the new observation
         observation = self.get_observation_dict_one_object()
+        observation["target_qpos"] = self.target_pos
 
         # Compute the distance
         cube_id = self.model.body("box").id
