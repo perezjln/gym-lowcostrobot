@@ -16,6 +16,7 @@ class BaseRobotEnv(gym.Env):
         # Load the MuJoCo model and data
         self.model = mujoco.MjModel.from_xml_path(xml_path)
         self.data = mujoco.MjData(self.model)
+        self.observation_mode = observation_mode
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
@@ -160,6 +161,8 @@ class BaseRobotEnv(gym.Env):
         if self.observation_mode in ["state", "both"]:
             observation["object_qpos"] = self.data.qpos[6:9].astype(np.float32)
             observation["object_qvel"] = self.data.qvel[6:9].astype(np.float32)
+
+        return observation
 
     def get_observation_dict_two_objects(self):
         raise NotImplementedError()

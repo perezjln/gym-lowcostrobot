@@ -12,6 +12,8 @@ if __name__ == "__main__":
         "ReachCube-v0",
         "Stack-v0",
     ]:
+
+        print(env_name)        
         env = gymnasium.make(env_name)
         env = FilterObservation(env, ["arm_qpos", "object_qpos"])
         env = FlattenObservation(env)
