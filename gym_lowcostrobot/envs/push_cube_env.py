@@ -4,6 +4,7 @@ import gymnasium as gym
 import mujoco
 import mujoco.viewer
 import numpy as np
+from gymnasium import spaces
 
 from gym_lowcostrobot import ASSETS_PATH
 from gym_lowcostrobot.envs.base_env import BaseRobotEnv
@@ -73,24 +74,20 @@ class PushCubeEnv(BaseRobotEnv):
         # Define the action space and observation space
         self.action_space = self.set_action_space_without_gripper()
 
-        """
-        low = [-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0]  # ruff: noqa: E501
-        high = [np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0]  # ruff: noqa: E501
-        self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)
-        """
-        spaces = {
-            "arm_qpos": gym.spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
-            "arm_qvel": gym.spaces.Box(low=-10.0, high=10.0, shape=(6,)),
-            "target_qpos": gym.spaces.Box(low=-10.0, high=10.0, shape=(3,)),
+        # Set the observations space
+        observation_subspaces = {
+            "arm_qpos": spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
+            "arm_qvel": spaces.Box(low=-10.0, high=10.0, shape=(6,)),
+            "target_qpos": spaces.Box(low=-10.0, high=10.0, shape=(3,)),
         }
         if observation_mode in ["image", "both"]:
-            spaces["image_front"] = gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3))
-            spaces["image_top"] = gym.spaces.Box(low=-np.pi, high=np.pi, shape=(240, 320, 3))
+            observation_subspaces["image_front"] = spaces.Box(0, 255, shape=(240, 320, 3), dtype=np.uint8)
+            observation_subspaces["image_top"] = spaces.Box(0, 255, shape=(240, 320, 3), dtype=np.uint8)
         if observation_mode in ["state", "both"]:
-            spaces["object_qpos"] = gym.spaces.Box(low=-10.0, high=10.0, shape=(3,))
-            spaces["object_qvel"] = gym.spaces.Box(low=-10.0, high=10.0, shape=(3,))
+            observation_subspaces["object_qpos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
+            observation_subspaces["object_qvel"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
+        self.observation_space = gym.spaces.Dict(observation_subspaces)
 
-        self.observation_space = gym.spaces.Dict(spaces)
         self.threshold_distance = 0.015
         self.set_object_range(obj_xy_range)
         self.set_target_range(target_xy_range)
