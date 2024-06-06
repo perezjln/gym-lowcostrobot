@@ -19,42 +19,49 @@ class LiftCubeEnv(BaseRobotEnv):
 
     ## Action space
 
-    Two action modes are available: "joint" and "ee". In the "joint" mode, the action space is a 5-dimensional box
+    Two action modes are available: "joint" and "ee". In the "joint" mode, the action space is a 6-dimensional box
     representing the target joint angles.
 
-    | Index | Action                      | Type (unit) | Min  | Max |
-    | ----- | --------------------------- | ----------- | ---- | --- |
-    | 0     | Joint 1 (base to shoulder)  | Float (rad) | -1.0 | 1.0 |
-    | 1     | Joint 2 (shoulder to elbow) | Float (rad) | -1.0 | 1.0 |
-    | 2     | Joint 3 (elbow to wrist)    | Float (rad) | -1.0 | 1.0 |
-    | 3     | Joint 4 (wrist to gripper)  | Float (rad) | -1.0 | 1.0 |
-    | 4     | Joint 5 (gripper)           | Float (rad) | -1.0 | 1.0 |
+    | Index | Action              | Type (unit) | Min  | Max |
+    | ----- | ------------------- | ----------- | ---- | --- |
+    | 0     | Shoulder pan joint  | Float (rad) | -1.0 | 1.0 |
+    | 1     | Shoulder lift joint | Float (rad) | -1.0 | 1.0 |
+    | 2     | Elbow flex joint    | Float (rad) | -1.0 | 1.0 |
+    | 3     | Wrist flex joint    | Float (rad) | -1.0 | 1.0 |
+    | 4     | Wrist roll joint    | Float (rad) | -1.0 | 1.0 |
+    | 5     | Gripper joint       | Float (rad) | -1.0 | 1.0 |
 
-    In the "ee" mode, the action space is a 3-dimensional box representing the target end-effector position.
+    In the "ee" mode, the action space is a 4-dimensional box representing the target end-effector position and the
+    gripper position.
 
-    | Index | Action  | Type (unit) | Min  | Max |
-    | ----- | ------- | ----------- | ---- | --- |
-    | 0     | X       | Float (m)   | -1.0 | 1.0 |
-    | 1     | Y       | Float (m)   | -1.0 | 1.0 |
-    | 2     | Z       | Float (m)   | -1.0 | 1.0 |
-    | 3     | Gripper | Float (m)   | -1.0 | 1.0 |
+    | Index | Action        | Type (unit) | Min  | Max |
+    | ----- | ------------- | ----------- | ---- | --- |
+    | 0     | X             | Float (m)   | -1.0 | 1.0 |
+    | 1     | Y             | Float (m)   | -1.0 | 1.0 |
+    | 2     | Z             | Float (m)   | -1.0 | 1.0 |
+    | 5     | Gripper joint | Float (rad) | -1.0 | 1.0 |
 
     ## Observation space
 
-    | Index | Observation                              | Type (unit) | Min   | Max  |
-    | ----- | ---------------------------------------- | ----------- | ----- | ---- |
-    | 0     | Angle of 1st joint 1 (base to shoulder)  | Float (rad) | -3.14 | 3.14 |
-    | 1     | Angle of 2nd joint 2 (shoulder to elbow) | Float (rad) | -3.14 | 3.14 |
-    | 2     | Angle of 3rd joint 3 (elbow to wrist)    | Float (rad) | -3.14 | 3.14 |
-    | 3     | Angle of 4th joint 4 (wrist to gripper)  | Float (rad) | -3.14 | 3.14 |
-    | 4     | Angle of 5th joint 5 (gripper)           | Float (rad) | -3.14 | 3.14 |
-    | 5     | X position of the cube                   | Float (m)   | -10.0 | 10.0 |
-    | 6     | Y position of the cube                   | Float (m)   | -10.0 | 10.0 |
-    | 7     | Z position of the cube                   | Float (m)   | -10.0 | 10.0 |
-    | 8     | Quaternion \( w \) of the cube           | Float       | -1.0  | 1.0  |
-    | 9     | Quaternion \( x \) of the cube           | Float       | -1.0  | 1.0  |
-    | 10    | Quaternion \( y \) of the cube           | Float       | -1.0  | 1.0  |
-    | 11    | Quaternion \( z \) of the cube           | Float       | -1.0  | 1.0  |
+    The observation space is a dictionary containing the following subspaces:
+
+    - `"arm_qpos"`: the joint angles of the robot arm in radians, shape (6,)
+    - `"arm_qvel"`: the joint velocities of the robot arm in radians per second, shape (6,)
+    - `"object_qpos"`: the position of the cube, as (x, y, z)
+    - `"object_qvel"`: the velocity of the cube, as (vx, vy, vz)
+    - `"image_front"`: the front image of the camera of size (240, 320, 3)
+    - `"image_top"`: the top image of the camera of size (240, 320, 3)
+
+    Three observation modes are available: "state", "image" (default), and "both".
+
+    | Key             | `"state"` | `"image"` | `"both"` |
+    | --------------- | --------- | --------- | -------- |
+    | `"arm_qpos"`    | ✓         | ✓         | ✓        |
+    | `"arm_qvel"`    | ✓         | ✓         | ✓        |
+    | `"object_qpos"` | ✓         |           | ✓        |
+    | `"object_qvel"` | ✓         |           | ✓        |
+    | `"image_front"` |           | ✓         | ✓        |
+    | `"image_top"`   |           | ✓         | ✓        |
 
     ## Reward
 
@@ -82,7 +89,6 @@ class LiftCubeEnv(BaseRobotEnv):
         observation_subspaces = {
             "arm_qpos": spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
             "arm_qvel": spaces.Box(low=-10.0, high=10.0, shape=(6,)),
-            "target_qpos": spaces.Box(low=-10.0, high=10.0, shape=(3,)),
         }
         if observation_mode in ["image", "both"]:
             observation_subspaces["image_front"] = spaces.Box(0, 255, shape=(240, 320, 3), dtype=np.uint8)
@@ -111,9 +117,6 @@ class LiftCubeEnv(BaseRobotEnv):
         mujoco.mj_forward(self.model, self.data)
 
         return self.get_observation_dict_one_object(), {}
-
-    def get_observation(self):
-        return self.data.qpos.astype(dtype=np.float32)
 
     def step(self, action):
         # Perform the action and step the simulation
