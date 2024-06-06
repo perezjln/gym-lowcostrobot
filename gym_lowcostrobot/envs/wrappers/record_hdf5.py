@@ -1,12 +1,11 @@
 """Wrapper for recording videos."""
+
 import os
-from typing import Callable, Optional
 
 import gymnasium as gym
-from gymnasium import logger
-
 import h5py
 import numpy as np
+from gymnasium import logger
 
 """
 observations
@@ -17,10 +16,9 @@ observations/qpos
 observations/qvel
 """
 
+
 class HDF5_Recorder:
-
     def __init__(self):
-
         self.step_id = 0
         self.terminated = False
         self.truncated = False
@@ -52,8 +50,12 @@ class HDF5_Recorder:
         """Closes the hdf5 file."""
         if self.hdf5_file is not None:
             with h5py.File(self.hdf5_file, "w") as file:
-                file.create_dataset("observations/images/front", data=np.stack([item["image_front"] for item in self.lst_observations]))
-                file.create_dataset("observations/images/top", data=np.stack([item["image_top"] for item in self.lst_observations]))
+                file.create_dataset(
+                    "observations/images/front", data=np.stack([item["image_front"] for item in self.lst_observations])
+                )
+                file.create_dataset(
+                    "observations/images/top", data=np.stack([item["image_top"] for item in self.lst_observations])
+                )
                 file.create_dataset("observations/qpos", data=np.stack([item["arm_qpos"] for item in self.lst_observations]))
                 file.create_dataset("observations/qvel", data=np.stack([item["arm_qvel"] for item in self.lst_observations]))
                 file.create_dataset("action", data=self.lst_actions)
@@ -63,7 +65,6 @@ class HDF5_Recorder:
 
 
 class RecordHDF5Wrapper(gym.Wrapper):
-
     def __init__(
         self,
         env: gym.Env,
@@ -118,7 +119,6 @@ class RecordHDF5Wrapper(gym.Wrapper):
         self.recording = True
         self.episode_id += 1
 
-
     def step(self, action):
         """Steps through the environment using action, recording observations if :attr:`self.recording`."""
 
@@ -139,7 +139,7 @@ class RecordHDF5Wrapper(gym.Wrapper):
                         self.start_hdf5_recorder()
                 elif terminateds[0] or truncateds[0]:
                     self.start_hdf5_recorder()
-        
+
         return observations, rewards, terminateds, truncateds, infos
 
     def close_hdf5_recorder(self):
