@@ -25,7 +25,7 @@ def do_replay_hdf5(args):
                 step_start = time.time()
 
                 # Step the simulation forward
-                robot.set_target_pos(group_qpos[step][0:6])
+                robot.set_target_qpos(group_qpos[step][0:6])
                 mujoco.mj_step(m, data)
 
                 viewer.sync()

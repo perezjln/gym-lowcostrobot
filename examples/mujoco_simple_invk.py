@@ -41,7 +41,7 @@ def do_simple_invk(robot_id="6dof", do_reset=False):
         max_dist = 0.35
         invert_y = False
         square_size = 0.2
-        origin_pos=[0, 0.2]
+        origin_pos = [0, 0.2]
     else:
         return
 
@@ -62,7 +62,7 @@ def do_simple_invk(robot_id="6dof", do_reset=False):
             step_start = time.time()
             q_target_pos = robot.inverse_kinematics_reg(ee_target_pos=cube_pos, joint_name=joint_name, nb_dof=nb_dof, step=0.2)
             q_target_pos[-1] = 0.0
-            robot.set_target_pos(q_target_pos)
+            robot.set_target_qpos(q_target_pos)
 
             # Step the simulation forward
             mujoco.mj_step(m, data)

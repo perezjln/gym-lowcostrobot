@@ -1,13 +1,10 @@
+import gymnasium as gym
 import torch
 from gymnasium.wrappers.filter_observation import FilterObservation
 from gymnasium.wrappers.flatten_observation import FlattenObservation
 from stable_baselines3 import PPO, TD3
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.vec_env import SubprocVecEnv
-
-import gymnasium as gym
-from gym_lowcostrobot.envs.push_cube_env import PushCubeEnv
 
 
 def do_td3_push():
@@ -30,11 +27,10 @@ def make_env():
     env = FlattenObservation(env)
     return env
 
-from stable_baselines3.common.env_util import make_vec_env
+
 def do_ppo_push(device="cpu", render=True):
     nb_parallel_env = 4
-    envs = make_vec_env(make_env, 
-                        n_envs=nb_parallel_env)
+    envs = make_vec_env(make_env, n_envs=nb_parallel_env)
 
     # Define and train the TD3 agent
     model = PPO("MlpPolicy", envs, verbose=1, device=device)
