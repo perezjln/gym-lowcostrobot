@@ -13,7 +13,7 @@ class BaseRobotEnv(gym.Env):
         super().__init__()
 
         # Load the MuJoCo model and data
-        self.model = mujoco.MjModel.from_xml_path(xml_path)
+        self.model = mujoco.MjModel.from_xml_path(xml_path, {})
         self.data = mujoco.MjData(self.model)
         self.observation_mode = observation_mode
 
@@ -27,7 +27,6 @@ class BaseRobotEnv(gym.Env):
             self.renderer = mujoco.Renderer(self.model)
 
         self.action_mode = action_mode
-        self.current_step = 0
 
     def inverse_kinematics(self, ee_target_pos, step=0.2):
         """
@@ -89,7 +88,6 @@ class BaseRobotEnv(gym.Env):
 
         # Step the simulation forward
         mujoco.mj_step(self.model, self.data)
-        self.current_step += 1
 
     def get_observation(self):
         observation = {
