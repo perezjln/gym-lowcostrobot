@@ -47,26 +47,19 @@ class LiftCubeEnv(BaseRobotEnv):
 
     - `"arm_qpos"`: the joint angles of the robot arm in radians, shape (6,)
     - `"arm_qvel"`: the joint velocities of the robot arm in radians per second, shape (6,)
-    - `"object_qpos"`: the position of the cube, as (x, y, z)
-    - `"object_qvel"`: the velocity of the cube, as (vx, vy, vz)
     - `"image_front"`: the front image of the camera of size (240, 320, 3)
     - `"image_top"`: the top image of the camera of size (240, 320, 3)
+    - `"object_qpos"`: the position of the cube, as (x, y, z)
 
-    Three observation modes are available: "state", "image" (default), and "both".
+    Three observation modes are available: "image" (default), "state", and "both".
 
-    | Key             | `"state"` | `"image"` | `"both"` |
+    | Key             | `"image"` | `"state"` | `"both"` |
     | --------------- | --------- | --------- | -------- |
     | `"arm_qpos"`    | ✓         | ✓         | ✓        |
     | `"arm_qvel"`    | ✓         | ✓         | ✓        |
-    | `"object_qpos"` | ✓         |           | ✓        |
-    | `"object_qvel"` | ✓         |           | ✓        |
-    | `"image_front"` |           | ✓         | ✓        |
-    | `"image_top"`   |           | ✓         | ✓        |
-
-    ## Reward
-
-    The reward is the z position of the cube. The episode is terminated when the cube is lifted above a threshold
-    distance.
+    | `"image_front"` | ✓         |           | ✓        |
+    | `"image_top"`   | ✓         |           | ✓        |
+    | `"object_qpos"` |           | ✓         | ✓        |
 
     ## Reward
 
@@ -74,7 +67,7 @@ class LiftCubeEnv(BaseRobotEnv):
     distance.
     """
 
-    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, obj_xy_range=0.15):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_one_cube.xml"),
             observation_mode=observation_mode,
@@ -83,7 +76,8 @@ class LiftCubeEnv(BaseRobotEnv):
         )
 
         # Define the action space and observation space
-        self.action_space = self.set_action_space_with_gripper()
+        action_shape = {"joint": 6, "ee": 4}[action_mode]
+        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
 
         # Set the observations space
         observation_subspaces = {
@@ -95,38 +89,37 @@ class LiftCubeEnv(BaseRobotEnv):
             observation_subspaces["image_top"] = spaces.Box(0, 255, shape=(240, 320, 3), dtype=np.uint8)
         if observation_mode in ["state", "both"]:
             observation_subspaces["object_qpos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
-            observation_subspaces["object_qvel"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
         self.observation_space = gym.spaces.Dict(observation_subspaces)
 
         self.threshold_height = 0.5
-        self.set_object_range(obj_xy_range)
+        self.object_low = np.array([-0.15, -0.15, 0.05])
+        self.object_high = np.array([0.15, 0.15, 0.05])
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
         super().reset(seed=seed, options=options)
 
-        # Reset the robot to the initial position
-        self.data.qpos[:6] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
-
-        # Sample and set the object position
-        object_pos = self.np_random.uniform(self.object_low, self.object_high).astype(np.float32)
-        object_rot = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
-        self.data.qpos[6:13] = np.concatenate([object_pos, object_rot])
+        # Reset the robot to the initial position and sample the object position
+        robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        object_pos = self.np_random.uniform(self.object_low, self.object_high)
+        object_rot = np.array([1.0, 0.0, 0.0, 0.0])
+        self.data.qpos[:13] = np.concatenate([robot_qpos, object_pos, object_rot])
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        return self.get_observation_dict_one_object(), {}
+        return self.get_observation(), {}
 
     def step(self, action):
         # Perform the action and step the simulation
-        self.base_step_action_withgrasp(action)
+        self.apply_action(action, block_gripper=False)
 
         # Get the new observation
-        observation = self.get_observation_dict_one_object()
+        observation = self.get_observation()
 
         # Get the height of the object
-        object_z = self.data.qpos[8]
+        cube_id = self.model.body("box").id
+        object_z = self.data.geom_xpos[cube_id][2]
 
         # Compute the reward
         reward = object_z

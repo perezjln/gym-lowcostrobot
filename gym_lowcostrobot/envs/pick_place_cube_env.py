@@ -19,45 +19,47 @@ class PickPlaceCubeEnv(BaseRobotEnv):
 
     ## Action space
 
-    Two action modes are available: "joint" and "ee". In the "joint" mode, the action space is a 5-dimensional box
+    Two action modes are available: "joint" and "ee". In the "joint" mode, the action space is a 6-dimensional box
     representing the target joint angles.
 
-    | Index | Action                      | Type (unit) | Min  | Max |
-    | ----- | --------------------------- | ----------- | ---- | --- |
-    | 0     | Joint 1 (base to shoulder)  | Float (rad) | -1.0 | 1.0 |
-    | 1     | Joint 2 (shoulder to elbow) | Float (rad) | -1.0 | 1.0 |
-    | 2     | Joint 3 (elbow to wrist)    | Float (rad) | -1.0 | 1.0 |
-    | 3     | Joint 4 (wrist to gripper)  | Float (rad) | -1.0 | 1.0 |
-    | 4     | Joint 5 (gripper)           | Float (rad) | -1.0 | 1.0 |
+    | Index | Action              | Type (unit) | Min  | Max |
+    | ----- | ------------------- | ----------- | ---- | --- |
+    | 0     | Shoulder pan joint  | Float (rad) | -1.0 | 1.0 |
+    | 1     | Shoulder lift joint | Float (rad) | -1.0 | 1.0 |
+    | 2     | Elbow flex joint    | Float (rad) | -1.0 | 1.0 |
+    | 3     | Wrist flex joint    | Float (rad) | -1.0 | 1.0 |
+    | 4     | Wrist roll joint    | Float (rad) | -1.0 | 1.0 |
+    | 5     | Gripper joint       | Float (rad) | -1.0 | 1.0 |
 
-    In the "ee" mode, the action space is a 3-dimensional box representing the target end-effector position.
+    In the "ee" mode, the action space is a 4-dimensional box representing the target end-effector position and the
+    gripper position.
 
-    | Index | Action  | Type (unit) | Min  | Max |
-    | ----- | ------- | ----------- | ---- | --- |
-    | 0     | X       | Float (m)   | -1.0 | 1.0 |
-    | 1     | Y       | Float (m)   | -1.0 | 1.0 |
-    | 2     | Z       | Float (m)   | -1.0 | 1.0 |
-    | 3     | Gripper | Float (m)   | -1.0 | 1.0 |
+    | Index | Action        | Type (unit) | Min  | Max |
+    | ----- | ------------- | ----------- | ---- | --- |
+    | 0     | X             | Float (m)   | -1.0 | 1.0 |
+    | 1     | Y             | Float (m)   | -1.0 | 1.0 |
+    | 2     | Z             | Float (m)   | -1.0 | 1.0 |
+    | 5     | Gripper joint | Float (rad) | -1.0 | 1.0 |
 
     ## Observation space
 
-    | Index | Observation                              | Type (unit) | Min   | Max  |
-    | ----- | ---------------------------------------- | ----------- | ----- | ---- |
-    | 0     | Angle of 1st joint 1 (base to shoulder)  | Float (rad) | -3.14 | 3.14 |
-    | 1     | Angle of 2nd joint 2 (shoulder to elbow) | Float (rad) | -3.14 | 3.14 |
-    | 2     | Angle of 3rd joint 3 (elbow to wrist)    | Float (rad) | -3.14 | 3.14 |
-    | 3     | Angle of 4th joint 4 (wrist to gripper)  | Float (rad) | -3.14 | 3.14 |
-    | 4     | Angle of 5th joint 5 (gripper)           | Float (rad) | -3.14 | 3.14 |
-    | 5     | X position of the cube                   | Float (m)   | -10.0 | 10.0 |
-    | 6     | Y position of the cube                   | Float (m)   | -10.0 | 10.0 |
-    | 7     | Z position of the cube                   | Float (m)   | -10.0 | 10.0 |
-    | 8     | Quaternion \( w \) of the cube           | Float       | -1.0  | 1.0  |
-    | 9     | Quaternion \( x \) of the cube           | Float       | -1.0  | 1.0  |
-    | 10    | Quaternion \( y \) of the cube           | Float       | -1.0  | 1.0  |
-    | 11    | Quaternion \( z \) of the cube           | Float       | -1.0  | 1.0  |
-    | 12    | X position of the target                 | Float (m)   | -10.0 | 10.0 |
-    | 13    | Y position of the target                 | Float (m)   | -10.0 | 10.0 |
-    | 14    | Z position of the target                 | Float (m)   | -10.0 | 10.0 |
+    The observation space is a dictionary containing the following subspaces:
+
+    - `"arm_qpos"`: the joint angles of the robot arm in radians, shape (6,)
+    - `"arm_qvel"`: the joint velocities of the robot arm in radians per second, shape (6,)
+    - `"image_front"`: the front image of the camera of size (240, 320, 3)
+    - `"image_top"`: the top image of the camera of size (240, 320, 3)
+    - `"object_qpos"`: the position of the cube, as (x, y, z)
+
+    Three observation modes are available: "image" (default), "state", and "both".
+
+    | Key             | `"image"` | `"state"` | `"both"` |
+    | --------------- | --------- | --------- | -------- |
+    | `"arm_qpos"`    | ✓         | ✓         | ✓        |
+    | `"arm_qvel"`    | ✓         | ✓         | ✓        |
+    | `"image_front"` | ✓         |           | ✓        |
+    | `"image_top"`   | ✓         |           | ✓        |
+    | `"object_qpos"` |           | ✓         | ✓        |
 
     ## Reward
 
@@ -65,7 +67,7 @@ class PickPlaceCubeEnv(BaseRobotEnv):
     distance is less than a threshold.
     """
 
-    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None, target_xy_range=0.2, obj_xy_range=0.2):
+    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None):
         super().__init__(
             xml_path=os.path.join(ASSETS_PATH, "scene_one_cube.xml"),
             observation_mode=observation_mode,
@@ -74,13 +76,8 @@ class PickPlaceCubeEnv(BaseRobotEnv):
         )
 
         # Define the action space and observation space
-        self.action_space = self.set_action_space_with_gripper()
-
-        """
-        low = [-np.pi, -np.pi, -np.pi, -np.pi, -np.pi, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0, -10.0, -10.0, -10.0, -1.0, -1.0, -1.0, -1.0]  # ruff: noqa: E501
-        high = [np.pi, np.pi, np.pi, np.pi, np.pi, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0, 10.0, 10.0, 10.0, 1.0, 1.0, 1.0, 1.0]  # ruff: noqa: E501
-        self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)
-        """
+        action_shape = {"joint": 6, "ee": 4}[action_mode]
+        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
 
         # Set the observations space
         observation_subspaces = {
@@ -93,44 +90,45 @@ class PickPlaceCubeEnv(BaseRobotEnv):
             observation_subspaces["image_top"] = spaces.Box(0, 255, shape=(240, 320, 3), dtype=np.uint8)
         if observation_mode in ["state", "both"]:
             observation_subspaces["object_qpos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
-            observation_subspaces["object_qvel"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
         self.observation_space = gym.spaces.Dict(observation_subspaces)
 
         self.threshold_distance = 0.02
-        self.set_object_range(obj_xy_range)
-        self.set_target_range(target_xy_range)
+        self.object_low = np.array([-0.2, -0.2, 0.05])
+        self.object_high = np.array([0.2, 0.2, 0.05])
+        self.target_low = np.array([-0.2, -0.2, 0.05])
+        self.target_high = np.array([0.2, 0.2, 0.05])
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
         super().reset(seed=seed, options=options)
 
-        # Reset the robot to the initial position
-        self.data.qpos[:6] = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
-
-        # Sample and set the object position
-        object_pos = self.np_random.uniform(self.object_low, self.object_high).astype(np.float32)
-        object_rot = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
-        self.data.qpos[6:13] = np.concatenate([object_pos, object_rot])
+        # Reset the robot to the initial position and sample the object position
+        robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        object_pos = self.np_random.uniform(self.object_low, self.object_high)
+        object_rot = np.array([1.0, 0.0, 0.0, 0.0])
+        self.data.qpos[:13] = np.concatenate([robot_qpos, object_pos, object_rot])
 
         # Sample the target position
-        self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
+        self.target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        return self.get_observation_dict_two_objects(), {}
+        # Get the observation
+        observation = self.get_observation()
+        observation["target_qpos"] = self.target_pos
 
-    def get_observation(self):
-        return np.concatenate([self.data.qpos, self.target_pos], dtype=np.float32)
+        return observation, {}
 
     def step(self, action):
         # Perform the action and step the simulation
-        self.base_step_action_withgrasp(action)
+        self.apply_action(action, block_gripper=False)
 
         # Get the new observation
-        observation = self.get_observation_dict_two_objects()
+        observation = self.get_observation()
+        observation["target_qpos"] = self.target_pos
 
-        # Compute the distance between the cube and the target position
+        # Get the distance between the cube and the target position
         cube_id = self.model.body("box").id
         cube_pos = self.data.geom_xpos[cube_id]
         distance = np.linalg.norm(cube_pos - self.target_pos)
