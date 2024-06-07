@@ -19,7 +19,7 @@ class BaseRobotEnv(gym.Env):
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
-        if self.render_mode:
+        if self.render_mode == "human":
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
             self.step_start = time.time()
 
@@ -76,10 +76,12 @@ class BaseRobotEnv(gym.Env):
             target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos)
             target_qpos[-1:] = gripper_action
         elif self.action_mode == "joint":
-            target_qpos = np.zeros(7, dtype=np.float32)
-            target_qpos[:6] = action[:6]
+            target_qpos = np.zeros(6, dtype=np.float32)
+            target_qpos[:5] = action[:5]
             if block_gripper:
                 target_qpos[-1] = 0.0
+            else:
+                target_qpos[-1] = action[-1]
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
@@ -109,7 +111,7 @@ class BaseRobotEnv(gym.Env):
         return observation
 
     def render(self):
-        if self.render_mode is not None:
+        if self.render_mode == "human":
             self.viewer.sync()
             time_until_next_step = self.model.opt.timestep - (time.time() - self.step_start)
             if time_until_next_step > 0:

@@ -3,7 +3,7 @@
 
   <default>
     <joint damping="0.2" frictionloss="0.1"/>
-    <position kp="100" forcerange="-100 100"/>
+    <position kp="100" forcerange="-10 10"/>
   </default>
 
   <asset>
@@ -110,12 +110,12 @@
   </worldbody>
 
   <actuator>
-    <position name="yaw" joint="yaw" inheritrange="1"  forcerange="-5000 5000"/>
-    <position name="pitch1" joint="pitch1" inheritrange="1"  forcerange="-50 50"/>
-    <position name="pitch2" joint="pitch2" inheritrange="1"  forcerange="-50 50"/>
-    <position name="pitch3" joint="pitch3" inheritrange="1"  forcerange="-50 50"/>
-    <position name="effector_roll" joint="effector_roll" inheritrange="1"  forcerange="-50 50"/>
-    <position name="gripper_opening" joint="gripper_opening" inheritrange="1"  forcerange="-50 50"/>
+    <position name="yaw" joint="yaw" inheritrange="1"  forcerange="-1 1"/>
+    <position name="pitch1" joint="pitch1" inheritrange="1"  forcerange="-1 1"/>
+    <position name="pitch2" joint="pitch2" inheritrange="1"  forcerange="-1 1"/>
+    <position name="pitch3" joint="pitch3" inheritrange="1"  forcerange="-1 1"/>
+    <position name="effector_roll" joint="effector_roll" inheritrange="1"  forcerange="-1 1"/>
+    <position name="gripper_opening" joint="gripper_opening" inheritrange="1"  forcerange="-1 1"/>
   </actuator>
 
 </mujoco>
