@@ -131,5 +131,5 @@ class SimulatedRobot:
 
         return q_target_pos
 
-    def set_target_pos(self, target_pos):
+    def set_target_qpos(self, target_pos):
         self.d.ctrl = target_pos

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 
 from gym_lowcostrobot.envs.push_cube_env import PushCubeEnv
 
+
 def do_env_sim_image():
     env = PushCubeEnv(render_mode=None)
     env.reset()
@@ -12,9 +13,9 @@ def do_env_sim_image():
         obs, _, terminated, truncated, _ = env.step(action)
 
         for key in ["image_front", "image_top"]:
-                print(key)
-                plt.imshow(obs[key])
-                plt.show()
+            print(key)
+            plt.imshow(obs[key])
+            plt.show()
 
         if terminated or truncated:
             env.reset()
