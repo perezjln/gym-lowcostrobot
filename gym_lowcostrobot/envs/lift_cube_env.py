@@ -101,8 +101,8 @@ class LiftCubeEnv(Env):
 
         # Set additional utils
         self.threshold_height = 0.5
-        self.object_low = np.array([-0.15, 0.05, 0.025])
-        self.object_high = np.array([0.15, 0.15, 0.025])
+        self.object_low = np.array([-0.15, 0.10, 0.025])
+        self.object_high = np.array([0.15, 0.25, 0.025])
 
 
     def apply_action(self, action):
