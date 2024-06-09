@@ -1,5 +1,7 @@
 # gym-lowcostrobot
 
+https://github.com/perezjln/gym-lowcostrobot/assets/45557362/cb724171-3c0e-467f-8957-97e79eb9c852
+
 This repository contains the code for gymnasium environments for a collection of lowcost-robots including https://github.com/AlexanderKoch-Koch/low_cost_robot/tree/main
 
 Various task associated with diverse action and observation modalities will be available.
