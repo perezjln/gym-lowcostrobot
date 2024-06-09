@@ -25,6 +25,7 @@ class BaseRobotEnv(gym.Env):
 
         if observation_mode in ["image", "both"]:
             self.renderer = mujoco.Renderer(self.model)
+            self.cameras = ["image_front", "image_top"] # Image key names in observation_dict for lerobotdataset
 
         self.action_mode = action_mode
 
