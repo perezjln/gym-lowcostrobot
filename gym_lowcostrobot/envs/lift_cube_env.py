@@ -13,8 +13,7 @@ class LiftCubeEnv(Env):
     """
     ## Description
 
-    The robot has to lift a cube with its end-effector. The episode is terminated when the cube is lifted above a
-    threshold distance.
+    The robot has to lift a cube with its end-effector.
 
     ## Action space
 
@@ -111,8 +110,8 @@ class LiftCubeEnv(Env):
 
         # Set additional utils
         self.threshold_height = 0.5
-        self.object_low = np.array([-0.15, 0.10, 0.015])
-        self.object_high = np.array([0.15, 0.25, 0.015])
+        self.cube_low = np.array([-0.15, 0.10, 0.015])
+        self.cube_high = np.array([0.15, 0.25, 0.015])
 
     def apply_action(self, action):
         """
@@ -168,11 +167,11 @@ class LiftCubeEnv(Env):
         # We need the following line to seed self.np_random
         super().reset(seed=seed, options=options)
 
-        # Reset the robot to the initial position and sample the object position
-        object_pos = self.np_random.uniform(self.object_low, self.object_high)
-        object_rot = np.array([1.0, 0.0, 0.0, 0.0])
+        # Reset the robot to the initial position and sample the cube position
+        cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
+        cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[:] = np.concatenate([object_pos, object_rot, robot_qpos])
+        self.data.qpos[:] = np.concatenate([cube_pos, cube_rot, robot_qpos])
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -186,7 +185,7 @@ class LiftCubeEnv(Env):
         # Get the new observation
         observation = self.get_observation()
 
-        # Get the position of the object and the distance between the end effector and the object
+        # Get the position of the cube and the distance between the end effector and the cube
         cube_pos = self.data.qpos[:3]
         cube_z = cube_pos[2]
         ee_id = self.model.body("moving_side").id
