@@ -179,7 +179,7 @@ class PickPlaceCubeEnv(Env):
         self.data.qpos[:] = np.concatenate([cube_pos, cube_rot, robot_qpos])
 
         # Sample the target position
-        self.target_pos = self.np_random.uniform(self.target_low, self.target_high)
+        self.target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)

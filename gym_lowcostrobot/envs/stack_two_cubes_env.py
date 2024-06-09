@@ -77,7 +77,7 @@ class StackTwoCubesEnv(Env):
 
     def __init__(self, observation_mode="image", action_mode="joint", render_mode=None):
         # Load the MuJoCo model and data
-        self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "stack_two_cubes_cube.xml"), {})
+        self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "stack_two_cubes.xml"), {})
         self.data = mujoco.MjData(self.model)
 
         # Set the action space

@@ -32,6 +32,6 @@ register(
 
 register(
     id="StackTwoCubes-v0",
-    entry_point="gym_lowcostrobot.envs:StackEnv",
+    entry_point="gym_lowcostrobot.envs:StackTwoCubesEnv",
     max_episode_steps=500,
 )
