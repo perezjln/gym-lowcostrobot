@@ -29,3 +29,15 @@ pip install ruff
 ruff format gym_lowcostrobot examples tests setup.py --line-length 119
 isort -l 119 gym_lowcostrobot examples tests setup.py
 ```
+
+To use headless:
+
+```sh
+export MUJOCO_GL=osmesa
+export DISPLAY=:0
+```
+
+Train 
+python -m rl_zoo3.train --algo ddpg --env LiftCube-v0 --env-kwargs observation_mode:'"state"' --gym-package gym_lowcostrobot
+
+python -m rl_zoo3.push_to_hub --algo ppo --env LiftCube-v0 -orga qgallouedec -f logs --load-best

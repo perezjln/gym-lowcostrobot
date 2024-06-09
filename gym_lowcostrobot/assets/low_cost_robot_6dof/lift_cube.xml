@@ -1,4 +1,5 @@
 <mujoco model="bd1 scene">
+	<option timestep="0.005"/>
 
 	<compiler angle="radian" autolimits="true"/>
 

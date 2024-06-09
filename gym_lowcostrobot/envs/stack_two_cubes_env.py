@@ -73,7 +73,7 @@ class StackTwoCubesEnv(Env):
     - `render_mode (str)`: the render mode, can be "human" or "rgb_array", default is None.
     """
 
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 120}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 200}
 
     def __init__(self, observation_mode="image", action_mode="joint", render_mode=None):
         # Load the MuJoCo model and data
@@ -137,7 +137,7 @@ class StackTwoCubesEnv(Env):
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-            target_qpos = action * (target_high - target_low) + target_low
+            target_qpos = action * (target_high - target_low) / 2 + (target_high + target_low) / 2
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
