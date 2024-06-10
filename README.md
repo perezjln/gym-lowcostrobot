@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.7%2B-blue)](https://www.python.org/downloads/release/python-370/)
 
-Gymnasium environments for simulated and real-world [Repository Link](https://github.com/AlexanderKoch-Koch/low_cost_robot).
+Gymnasium environments for simulated and real-world [Low Cost Robot](https://github.com/AlexanderKoch-Koch/low_cost_robot).
 
 https://github.com/perezjln/gym-lowcostrobot/assets/45557362/cb724171-3c0e-467f-8957-97e79eb9c852
 
