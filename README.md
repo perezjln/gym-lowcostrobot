@@ -57,7 +57,6 @@ env = gym.make("PickPlaceCube-v0", simulation=False)
 
 To run the environment in an headless machine, make sure to set the following environment variable:
 
-```bash
 ```sh
 export MUJOCO_GL=osmesa
 export DISPLAY=:0
