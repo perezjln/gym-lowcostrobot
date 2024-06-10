@@ -1,6 +1,5 @@
 # Gym Low Cost Robot
 
-
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.7%2B-blue)](https://www.python.org/downloads/release/python-370/)
 
