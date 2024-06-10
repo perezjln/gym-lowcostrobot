@@ -73,13 +73,13 @@ We welcome contributions to the project! Please follow these general guidelines:
 4. Push your branch to your fork.
 5. Create a pull request with a description of your changes.
 
-Format your code with [ruff]
+Format your code with [Ruff](https://github.com/astral-sh/ruff)
 
 ```sh
 ruff format gym_lowcostrobot examples tests setup.py --line-length 127
 ```
 
-and test your changes with pytest:
+and test your changes with [pytest](https://docs.pytest.org/en/8.2.x/):
 
 ```sh
 pytest
