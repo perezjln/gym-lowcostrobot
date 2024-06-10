@@ -1,43 +1,92 @@
-# gym-lowcostrobot
+# Gym Low Cost Robot
 
-This repository contains the code for gymnasium environments for a collection of lowcost-robots including https://github.com/AlexanderKoch-Koch/low_cost_robot/tree/main
 
-Various task associated with diverse action and observation modalities will be available.
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Python Version](https://img.shields.io/badge/python-3.7%2B-blue)](https://www.python.org/downloads/release/python-370/)
 
-Simple inverse kinematics
-https://github.com/perezjln/envs-lowcostrobot/assets/5373778/de8c6448-1ece-4823-89ee-ad59d05a431d
+Gymnasium environments for simulated and real-world [Repository Link](https://github.com/AlexanderKoch-Koch/low_cost_robot).
+
+https://github.com/perezjln/gym-lowcostrobot/assets/45557362/cb724171-3c0e-467f-8957-97e79eb9c852
 
 
 ## Installation
 
-```sh
-cd gym-lowcostrobot
-pip install .
+To install the package, use the following command:
+
+```bash
+pip install git+https://github.com/perezjln/gym-lowcostrobot.git
 ```
 
-## Test
+## Usage
 
-```sh
-pip install pytest
-pytest
+### Simulation Example: PickPlaceCube-v0
+
+Here's a basic example of how to use the `PickPlaceCube-v0` environment in simulation:
+
+```python
+import gymnasium as gym
+import gym_lowcostrobot # Import the low-cost robot environments
+
+# Create the environment
+env = gym.make("PickPlaceCube-v0", render_mode="human")
+
+# Reset the environment
+observation = env.reset()
+
+done = False
+while not done:
+    # Sample random action
+    action = env.action_space.sample()
+
+    # Step the environment
+    observation, reward, terminted, truncated, info = env.step(action)
+
+# Close the environment
+env.close()
 ```
 
-## Format
+### Real-World Interface
 
-```sh
-pip install ruff
-ruff format gym_lowcostrobot examples tests setup.py --line-length 119
-isort -l 119 gym_lowcostrobot examples tests setup.py
+For real-world interface with the real-world robot, just pass `simulation=False` to the environment:
+
+```python
+env = gym.make("PickPlaceCube-v0", simulation=False)
 ```
 
-To use headless:
+## Headless Mode
 
+To run the environment in an headless machine, make sure to set the following environment variable:
+
+```bash
 ```sh
 export MUJOCO_GL=osmesa
 export DISPLAY=:0
 ```
 
-Train 
-python -m rl_zoo3.train --algo ddpg --env LiftCube-v0 --env-kwargs observation_mode:'"state"' --gym-package gym_lowcostrobot
+## Contributing
 
-python -m rl_zoo3.push_to_hub --algo ppo --env LiftCube-v0 -orga qgallouedec -f logs --load-best
+We welcome contributions to the project! Please follow these general guidelines:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Commit your changes with clear messages.
+4. Push your branch to your fork.
+5. Create a pull request with a description of your changes.
+
+Format your code with [ruff]
+
+```sh
+ruff format gym_lowcostrobot examples tests setup.py --line-length 127
+```
+
+and test your changes with pytest:
+
+```sh
+pytest
+```
+
+For significant changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
