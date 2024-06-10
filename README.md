@@ -31,15 +31,18 @@ import gym_lowcostrobot # Import the low-cost robot environments
 env = gym.make("PickPlaceCube-v0", render_mode="human")
 
 # Reset the environment
-observation = env.reset()
+observation, info = env.reset()
 
-done = False
-while not done:
+for _ in range(1000):
     # Sample random action
     action = env.action_space.sample()
 
     # Step the environment
     observation, reward, terminted, truncated, info = env.step(action)
+
+    # Reset the environment if it's done
+    if terminted or truncated:
+        observation, info = env.reset()
 
 # Close the environment
 env.close()
@@ -52,6 +55,16 @@ For real-world interface with the real-world robot, just pass `simulation=False`
 ```python
 env = gym.make("PickPlaceCube-v0", simulation=False)
 ```
+
+### Environments
+
+Currently, the following environments are available:
+
+- `LiftCube-v0`: Lift a cube.
+- `PickPlaceCube-v0`: Pick and place a cube.
+- `PushCube-v0`: Push a cube.
+- `ReachCube-v0`: Reach a cube.
+- `StackTwoCubes-v0`: Stack two cubes.
 
 ## Headless Mode
 
