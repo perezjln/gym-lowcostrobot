@@ -3,7 +3,26 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.7%2B-blue)](https://www.python.org/downloads/release/python-370/)
 
-Gymnasium environments for simulated and real-world [Low Cost Robot](https://github.com/AlexanderKoch-Koch/low_cost_robot).
+This repository provide comprehensive gymnasium environments for simulated applications of the [Low Cost Robot](https://github.com/AlexanderKoch-Koch/low_cost_robot). 
+These environments are designed to facilitate robot learning research and development while remaining accessible and cost-effective.
+
+### Features
+
+- **Control Systems**: The environments support both Cartesian and Joint control, allowing for diverse tasks.
+- **State Definitions**: The state of the robot is defined using proprioception (joint position) and visual input from multiple cameras, enabling advanced perception capabilities on non-equipped environments.
+- **Dataset Recording**: Included is a recording script that allows users to build datasets in the leRobotDataset format. This format is defined by the [leRobot library](https://github.com/huggingface/lerobot), allowing to share and mutualize experiments among users adn tasks.
+
+### Goals
+
+The primary objective of these environments is to promote end-to-end open-source and affordable robotic learning platforms. By lowering the cost and accessibility barriers, we aim to:
+
+- **Advance Research**: Provide researchers and developers with tools to explore and push the boundaries of robotics and AI.
+- **Encourage Innovation**: Foster a community of innovators who can contribute to and benefit from shared knowledge and resources.
+- **Educate and Train**: Serve as a valuable educational resource for students and educators in the fields of robotics, computer science, and engineering.
+
+By leveraging these open-source tools, we believe that more individuals, research institutions and schools can participate in and contribute to the growing field of robotic learning, ultimately driving forward the discipline as a whole.
+
+---
 
 https://github.com/perezjln/gym-lowcostrobot/assets/45557362/cb724171-3c0e-467f-8957-97e79eb9c852
 
