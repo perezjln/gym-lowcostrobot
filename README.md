@@ -103,7 +103,7 @@ For significant changes, please open an issue first to discuss what you would li
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
 
 ## Todos
-- **Improve the fidelity of the simulation**.
-- **Implement inverse kinematics in each environment**.
-- **Implement the real-world interface**.
-- **Provide reward shaping functions**.
+- [ ] **Improve the fidelity of the simulation**.
+- [ ] **Implement inverse kinematics in each environment**.
+- [ ] **Implement the real-world interface**.
+- [ ] **Provide reward shaping functions**.
