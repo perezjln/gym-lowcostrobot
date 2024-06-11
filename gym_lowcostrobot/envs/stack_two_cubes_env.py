@@ -9,11 +9,11 @@ from gymnasium import Env, spaces
 from gym_lowcostrobot import ASSETS_PATH
 
 
-class PickPlaceCubeEnv(Env):
+class StackTwoCubesEnv(Env):
     """
     ## Description
 
-    The robot has to pick and place a cube with its end-effector.
+    The robot has to stack the blue cube on top of the red cube.
 
     ## Action space
 
@@ -45,25 +45,25 @@ class PickPlaceCubeEnv(Env):
 
     - `"arm_qpos"`: the joint angles of the robot arm in radians, shape (6,)
     - `"arm_qvel"`: the joint velocities of the robot arm in radians per second, shape (6,)
-    - `"target_pos"`: the position of the target, as (x, y, z)
     - `"image_front"`: the front image of the camera of size (240, 320, 3)
     - `"image_top"`: the top image of the camera of size (240, 320, 3)
-    - `"cube_pos"`: the position of the cube, as (x, y, z)
+    - `"cube_red_pos"`: the position of the red cube, as (x, y, z)
+    - `"cube_blue_pos"`: the position of the blue cube, as (x, y, z)
 
     Three observation modes are available: "image" (default), "state", and "both".
 
-    | Key             | `"image"` | `"state"` | `"both"` |
-    | --------------- | --------- | --------- | -------- |
-    | `"arm_qpos"`    | ✓         | ✓         | ✓        |
-    | `"arm_qvel"`    | ✓         | ✓         | ✓        |
-    | `"target_pos"`  | ✓         | ✓         | ✓        |
-    | `"image_front"` | ✓         |           | ✓        |
-    | `"image_top"`   | ✓         |           | ✓        |
-    | `"cube_pos"`    |           | ✓         | ✓        |
+    | Key               | `"image"` | `"state"` | `"both"` |
+    | ----------------- | --------- | --------- | -------- |
+    | `"arm_qpos"`      | ✓         | ✓         | ✓        |
+    | `"arm_qvel"`      | ✓         | ✓         | ✓        |
+    | `"image_front"`   | ✓         |           | ✓        |
+    | `"image_top"`     | ✓         |           | ✓        |
+    | `"cube_red_pos"`  |           | ✓         | ✓        |
+    | `"cube_blue_pos"` |           | ✓         | ✓        |
 
     ## Reward
 
-    The reward is the negative distance between the cube and the target position.
+    The reward is the opposite of the distance between the top of the red cube and the blue cube.
 
     ## Arguments
 
@@ -77,7 +77,7 @@ class PickPlaceCubeEnv(Env):
 
     def __init__(self, observation_mode="image", action_mode="joint", render_mode=None):
         # Load the MuJoCo model and data
-        self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "pick_place_cube.xml"), {})
+        self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "stack_two_cubes.xml"), {})
         self.data = mujoco.MjData(self.model)
 
         # Set the action space
@@ -90,14 +90,14 @@ class PickPlaceCubeEnv(Env):
         observation_subspaces = {
             "arm_qpos": spaces.Box(low=-np.pi, high=np.pi, shape=(6,)),
             "arm_qvel": spaces.Box(low=-10.0, high=10.0, shape=(6,)),
-            "target_pos": spaces.Box(low=-10.0, high=10.0, shape=(3,)),
         }
         if self.observation_mode in ["image", "both"]:
             observation_subspaces["image_front"] = spaces.Box(0, 255, shape=(240, 320, 3), dtype=np.uint8)
             observation_subspaces["image_top"] = spaces.Box(0, 255, shape=(240, 320, 3), dtype=np.uint8)
             self.renderer = mujoco.Renderer(self.model)
         if self.observation_mode in ["state", "both"]:
-            observation_subspaces["cube_pos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
+            observation_subspaces["cube_red_pos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
+            observation_subspaces["cube_blue_pos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
         self.observation_space = gym.spaces.Dict(observation_subspaces)
 
         # Set the render utilities
@@ -114,8 +114,6 @@ class PickPlaceCubeEnv(Env):
         self.threshold_height = 0.5
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
-        self.target_low = np.array([-0.15, 0.10, 0.015])
-        self.target_high = np.array([0.15, 0.25, 0.035])
 
     def apply_action(self, action):
         """
@@ -152,12 +150,11 @@ class PickPlaceCubeEnv(Env):
             self.viewer.sync()
 
     def get_observation(self):
-        # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, q6, gripper]
-        # qvel is [vx, vy, vz, wx, wy, wz, dq1, dq2, dq3, dq4, dq5, dq6, dgripper]
+        # qpos is [xr, yr, zr, qwr, qxr, qyr, qzr, xb, yb, zb, qwb, qxb, qyb, qzb, q1, q2, q3, q4, q5, q6, gripper]
+        # qvel is [vxr, vyr, vzr, wxr, wyr, wzr, vxb, vyb, vzb, wxb, wyb, wzb, dq1, dq2, dq3, dq4, dq5, dq6, dgripper]
         observation = {
-            "arm_qpos": self.data.qpos[7:13].astype(np.float32),
-            "arm_qvel": self.data.qvel[6:12].astype(np.float32),
-            "target_pos": self.target_pos,
+            "arm_qpos": self.data.qpos[14:20].astype(np.float32),
+            "arm_qvel": self.data.qvel[12:18].astype(np.float32),
         }
         if self.observation_mode in ["image", "both"]:
             self.renderer.update_scene(self.data, camera="camera_front")
@@ -165,7 +162,8 @@ class PickPlaceCubeEnv(Env):
             self.renderer.update_scene(self.data, camera="camera_top")
             observation["image_top"] = self.renderer.render()
         if self.observation_mode in ["state", "both"]:
-            observation["cube_pos"] = self.data.qpos[:3].astype(np.float32)
+            observation["cube_red_pos"] = self.data.qpos[:3].astype(np.float32)
+            observation["cube_blue_pos"] = self.data.qpos[7:10].astype(np.float32)
         return observation
 
     def reset(self, seed=None, options=None):
@@ -173,13 +171,12 @@ class PickPlaceCubeEnv(Env):
         super().reset(seed=seed, options=options)
 
         # Reset the robot to the initial position and sample the cube position
-        cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
-        cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
+        cube_red_pos = self.np_random.uniform(self.cube_low, self.cube_high)
+        cube_red_rot = np.array([1.0, 0.0, 0.0, 0.0])
+        cube_blue_pos = self.np_random.uniform(self.cube_low, self.cube_high)
+        cube_blue_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[:] = np.concatenate([cube_pos, cube_rot, robot_qpos])
-
-        # Sample the target position
-        self.target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
+        self.data.qpos[:] = np.concatenate([cube_red_pos, cube_red_rot, cube_blue_pos, cube_blue_rot, robot_qpos])
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -194,11 +191,13 @@ class PickPlaceCubeEnv(Env):
         observation = self.get_observation()
 
         # Get the position of the cube and the distance between the end effector and the cube
-        cube_pos = self.data.qpos[:3]
-        cube_to_target = np.linalg.norm(cube_pos - self.target_pos)
+        cube_red_pos = self.data.qpos[:3]
+        cube_blue_pos = self.data.qpos[7:10]
+        target_pos = cube_red_pos + np.array([0.0, 0.0, 0.03])
+        cube_blue_to_target = np.linalg.norm(cube_blue_pos - target_pos)
 
         # Compute the reward
-        reward = -cube_to_target
+        reward = -cube_blue_to_target
         return observation, reward, False, False, {}
 
     def render(self):

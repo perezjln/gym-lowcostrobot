@@ -4,18 +4,16 @@ import gymnasium as gym
 import mujoco
 import mujoco.viewer
 import numpy as np
-from gymnasium import spaces, Env
+from gymnasium import Env, spaces
 
 from gym_lowcostrobot import ASSETS_PATH
-from gym_lowcostrobot.envs.base_env import BaseRobotEnv
 
 
 class LiftCubeEnv(Env):
     """
     ## Description
 
-    The robot has to lift a cube with its end-effector. The episode is terminated when the cube is lifted above a
-    threshold distance.
+    The robot has to lift a cube with its end-effector.
 
     ## Action space
 
@@ -63,11 +61,18 @@ class LiftCubeEnv(Env):
 
     ## Reward
 
-    The reward is the z position of the cube. The episode is terminated when the cube is lifted above a threshold
-    distance.
+    The reward is the sum of two terms: the height of the cube above the threshold and the negative distance between the
+    end effector and the cube.
+
+    ## Arguments
+
+    - `observation_mode (str)`: the observation mode, can be "image", "state", or "both", default is "image", see
+        section "Observation space".
+    - `action_mode (str)`: the action mode, can be "joint" or "ee", default is "joint", see section "Action space".
+    - `render_mode (str)`: the render mode, can be "human" or "rgb_array", default is None.
     """
 
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 200}
 
     def __init__(self, observation_mode="image", action_mode="joint", render_mode=None):
         # Load the MuJoCo model and data
@@ -98,12 +103,15 @@ class LiftCubeEnv(Env):
         self.render_mode = render_mode
         if self.render_mode == "human":
             self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
+            self.viewer.cam.azimuth = -75
+            self.viewer.cam.distance = 1
+        elif self.render_mode == "rgb_array":
+            self.rgb_array_renderer = mujoco.Renderer(self.model, height=640, width=640)
 
         # Set additional utils
         self.threshold_height = 0.5
-        self.object_low = np.array([-0.15, 0.10, 0.025])
-        self.object_high = np.array([0.15, 0.25, 0.025])
-
+        self.cube_low = np.array([-0.15, 0.10, 0.015])
+        self.cube_high = np.array([0.15, 0.25, 0.015])
 
     def apply_action(self, action):
         """
@@ -111,11 +119,10 @@ class LiftCubeEnv(Env):
 
         Action shape
         - EE mode: [dx, dy, dz, gripper]
-        - EE mode and block gripper: [dx, dy, dz]
         - Joint mode: [q1, q2, q3, q4, q5, q6, gripper]
-        - Joint mode and block gripper: [q1, q2, q3, q4, q5, q6]
         """
         if self.action_mode == "ee":
+            raise NotImplementedError("EE mode not implemented yet")
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action
@@ -126,7 +133,9 @@ class LiftCubeEnv(Env):
             target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos)
             target_qpos[-1:] = gripper_action
         elif self.action_mode == "joint":
-            target_qpos = action
+            target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
+            target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
+            target_qpos = action * (target_high - target_low) / 2 + (target_high + target_low) / 2
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
@@ -138,11 +147,12 @@ class LiftCubeEnv(Env):
         if self.render_mode == "human":
             self.viewer.sync()
 
-
     def get_observation(self):
+        # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, q6, gripper]
+        # qvel is [vx, vy, vz, wx, wy, wz, dq1, dq2, dq3, dq4, dq5, dq6, dgripper]
         observation = {
-            "arm_qpos": self.data.qpos[:6].astype(np.float32),
-            "arm_qvel": self.data.qvel[:6].astype(np.float32),
+            "arm_qpos": self.data.qpos[7:13].astype(np.float32),
+            "arm_qvel": self.data.qvel[6:12].astype(np.float32),
         }
         if self.observation_mode in ["image", "both"]:
             self.renderer.update_scene(self.data, camera="camera_front")
@@ -150,19 +160,18 @@ class LiftCubeEnv(Env):
             self.renderer.update_scene(self.data, camera="camera_top")
             observation["image_top"] = self.renderer.render()
         if self.observation_mode in ["state", "both"]:
-            observation["cube_pos"] = self.data.qpos[6:9].astype(np.float32)
+            observation["cube_pos"] = self.data.qpos[:3].astype(np.float32)
         return observation
-
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
         super().reset(seed=seed, options=options)
 
-        # Reset the robot to the initial position and sample the object position
-        object_pos = self.np_random.uniform(self.object_low, self.object_high)
-        object_rot = np.array([1.0, 0.0, 0.0, 0.0])
+        # Reset the robot to the initial position and sample the cube position
+        cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
+        cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[:] = np.concatenate([object_pos, object_rot, robot_qpos])
+        self.data.qpos[:] = np.concatenate([cube_pos, cube_rot, robot_qpos])
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -176,23 +185,30 @@ class LiftCubeEnv(Env):
         # Get the new observation
         observation = self.get_observation()
 
-        # Get the height of the object
-        cube_z = self.data.qpos[8]
+        # Get the position of the cube and the distance between the end effector and the cube
+        cube_pos = self.data.qpos[:3]
+        cube_z = cube_pos[2]
+        ee_id = self.model.body("moving_side").id
+        ee_pos = self.data.geom_xpos[ee_id]
+        ee_to_cube = np.linalg.norm(ee_pos - cube_pos)
 
         # Compute the reward
-        reward = cube_z
-
-        # Check if the target position is reached
-        terminated = cube_z > self.threshold_height
-
-        return observation, reward, terminated, False, {}
+        reward_height = cube_z - self.threshold_height
+        reward_distance = -ee_to_cube
+        reward = reward_height + reward_distance
+        return observation, reward, False, False, {}
 
     def render(self):
         if self.render_mode == "human":
             self.viewer.sync()
+        elif self.render_mode == "rgb_array":
+            self.rgb_array_renderer.update_scene(self.data, camera="camera_vizu")
+            return self.rgb_array_renderer.render()
 
     def close(self):
         if self.render_mode == "human":
             self.viewer.close()
         if self.observation_mode in ["image", "both"]:
             self.renderer.close()
+        if self.render_mode == "rgb_array":
+            self.rgb_array_renderer.close()

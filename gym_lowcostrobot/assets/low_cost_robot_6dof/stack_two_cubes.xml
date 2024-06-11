@@ -35,10 +35,16 @@
 			<geom pos="0 0 0" name="floor" size="0 0 .125" type="plane" material="groundplane" conaffinity="1" contype="1" />
 		</body>
 
-		<body name="cube" pos="0.1 0.1 0.01">
-			<freejoint name="cube"/>
+		<body name="cube_red" pos="0.1 0.1 0.01">
+			<freejoint name="cube_red"/>
 			<inertial pos="0 0 0" mass="0.1" diaginertia="0.00001125 0.00001125 0.00001125"/>
-			<geom friction="0.5" condim="3" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="cube" rgba="0.5 0 0 1" priority="1"/>
+			<geom friction="0.5" condim="3" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="cube_red" rgba="0.5 0 0 1" priority="1"/>
+		</body>
+
+		<body name="cube_blue" pos="-0.1 -0.1 0.01">
+			<freejoint name="cube_blue"/>
+			<inertial pos="0 0 0" mass="0.1" diaginertia="0.00001125 0.00001125 0.00001125"/>
+			<geom friction="0.5" condim="3" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="cube_blue" rgba="0 0 0.5 1" priority="1"/>
 		</body>
 
 
