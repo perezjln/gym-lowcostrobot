@@ -8,8 +8,9 @@ These environments are designed to facilitate robot learning research and develo
 
 ### Features
 
-- **Control Systems**: The environments support both Cartesian and Joint control, allowing for diverse tasks.
+- **Action Definitions**: The environments support both Cartesian and Joint control, allowing for diverse tasks.
 - **State Definitions**: The state of the robot is defined using proprioception (joint position) and visual input from multiple cameras, enabling advanced perception capabilities on non-equipped environments.
+- **Rearrangement Tasks**: A set of rearrangement tasks involving single and multiple cubic objects is provided as a starting point. These tasks are designed to help users begin experimenting with and developing robotic manipulation skills.
 - **Dataset Recording**: Included is a recording script that allows users to build datasets in the leRobotDataset format. This format is defined by the [leRobot library](https://github.com/huggingface/lerobot), allowing to share and mutualize experiments among users adn tasks.
 
 ### Goals
