@@ -27,6 +27,7 @@ jobs:
         sudo apt-get update && sudo apt-get install libgl1-mesa-dev libxinerama-dev libxcursor-dev libxrandr-dev libxi-dev ninja-build
         apt-get install ffmpeg libsm6 libxext6  -y
         export CPATH=$CONDA_PREFIX/include
+        export C_INCLUDE_PATH=$CONDA_PREFIX/include
         export LIBRARY_PATH=$CONDA_PREFIX/lib
         cp /usr/lib/libGL.so.1 $CONDA_PREFIX/lib/
         ln -s $CONDA_PREFIX/lib/libGL.so.1 $CONDA_PREFIX/lib/libGL.so
