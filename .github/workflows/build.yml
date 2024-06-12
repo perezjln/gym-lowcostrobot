@@ -31,6 +31,8 @@ jobs:
         conda install -c conda-forge mesalib --yes
         conda install -c conda-forge glfw --yes
         conda install -c conda-forge libglu --yes
+        conda install -c conda-forge glfw --yes
+        conda install -c conda-forge libx11 --yes
         conda install -c menpo glfw3 --yes
         pip install --upgrade pip
         pip install -e .
