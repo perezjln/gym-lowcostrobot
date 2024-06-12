@@ -118,7 +118,7 @@ For significant changes, please open an issue first to discuss what you would li
 
 Currently, our todo list is:
 
-- [ ] Improve the fidelity of the simulation**.
+- [ ] Improve the fidelity of the simulation.
 - [ ] Implement inverse kinematics in each environment.
 - [ ] Implement the real-world interface.
 - [ ] Provide reward shaping functions.
