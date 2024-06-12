@@ -28,6 +28,7 @@ jobs:
         conda install -c conda-forge mesalib
         conda install -c anaconda mesa-libgl-cos6-x86_64
         conda install -c menpo glfw3
+        export CPATH=$CONDA_PREFIX/include
         pip install --upgrade pip
         pip install -e .
         pip install pytest
