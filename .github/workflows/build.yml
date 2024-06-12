@@ -24,6 +24,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        export CPATH=$CONDA_PREFIX/include
         conda install pip --yes
         conda install -c conda-forge freeglut --yes
         conda install -c conda-forge glew --yes
@@ -31,7 +32,6 @@ jobs:
         conda install -c conda-forge glfw --yes
         conda install -c conda-forge libglu --yes
         conda install -c menpo glfw3 --yes
-        export CPATH=$CONDA_PREFIX/include
         pip install --upgrade pip
         pip install -e .
         pip install pytest
