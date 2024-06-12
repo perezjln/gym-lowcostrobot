@@ -24,8 +24,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y libosmesa6
+        conda install -c conda-forge glew
+        conda install -c conda-forge mesalib
+        conda install -c anaconda mesa-libgl-cos6-x86_64
+        conda install -c menpo glfw3
         pip install --upgrade pip
         pip install -e .
         pip install pytest
