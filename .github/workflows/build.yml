@@ -25,8 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg libsm6 libxext6
-        sudo apt-get install -y python3-opengl
+        sudo apt-get install -y libsm6 libxext6 python3-opengl
         sudo apt install -y libosmesa6
         pip install --upgrade pip
         pip install -e .
