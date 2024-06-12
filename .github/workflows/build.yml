@@ -29,8 +29,6 @@ jobs:
         export CPATH=$CONDA_PREFIX/include
         export C_INCLUDE_PATH=$CONDA_PREFIX/include
         export LIBRARY_PATH=$CONDA_PREFIX/lib
-        cp /usr/lib/libGL.so.1 $CONDA_PREFIX/lib/
-        ln -s $CONDA_PREFIX/lib/libGL.so.1 $CONDA_PREFIX/lib/libGL.so
         conda install pip --yes
         conda install -c conda-forge freeglut --yes
         conda install -c conda-forge glew --yes
