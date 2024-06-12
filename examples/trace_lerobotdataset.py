@@ -4,18 +4,14 @@ using a very simple gym environment (see in examples/real_robot_example/gym_real
 
 import argparse
 import copy
-import os, time
-
+import os
 import pathlib
+import time
 
 import gymnasium as gym
-import gym_lowcostrobot  # noqa
-
 import numpy as np
 import torch
 from datasets import Dataset, Features, Sequence, Value
-from tqdm import tqdm
-
 from lerobot.common.datasets.compute_stats import compute_stats
 from lerobot.common.datasets.lerobot_dataset import CODEBASE_VERSION, DATA_DIR, LeRobotDataset
 from lerobot.common.datasets.push_dataset_to_hub.utils import concatenate_episodes, save_images_concurrently
@@ -24,11 +20,12 @@ from lerobot.common.datasets.utils import (
 )
 from lerobot.common.datasets.video_utils import VideoFrame, encode_video_frames
 from lerobot.scripts.push_dataset_to_hub import push_meta_data_to_hub, push_videos_to_hub, save_meta_data
+from tqdm import tqdm
 
+import gym_lowcostrobot  # noqa
 
 
 def process_args():
-
     # parse the repo_id name via command line
     parser = argparse.ArgumentParser()
     parser.add_argument("--num-episodes", type=int, default=2)
@@ -52,7 +49,6 @@ def process_args():
 
 
 if __name__ == "__main__":
-
     args = process_args()
 
     repo_id = args.repo_id
@@ -72,13 +68,11 @@ if __name__ == "__main__":
     videos_dir = out_data / "videos"
     meta_data_dir = out_data / "meta_data"
 
-
     # Create image and video directories
     if not os.path.exists(images_dir):
         os.makedirs(images_dir, exist_ok=True)
     if not os.path.exists(videos_dir):
         os.makedirs(videos_dir, exist_ok=True)
-
 
     # Create the gym environment - check the kwargs in gym_real_world/gym_environment.py
     gym_handle = "ReachCube-v0"
@@ -93,7 +87,6 @@ if __name__ == "__main__":
 
     ep_idx = 0
     while ep_idx < num_episodes:
-
         # bring the follower to the leader and start camera
         env.reset()
 
@@ -107,7 +100,6 @@ if __name__ == "__main__":
         start_time = time.time()
         drop_episode = False
         for _ in tqdm(range(num_frames)):
-
             # Apply the next action
             action = env.action_space.sample()
             observation, _, _, _, info = env.step(action=action)
@@ -116,15 +108,14 @@ if __name__ == "__main__":
             for key in observation:
                 obs_replay[key].append(copy.deepcopy(observation[key]))
             obs_replay["action"].append(copy.deepcopy(action))
-            
+
             # TODO: add the timestamp to the info dict
-            #timestamps.append(info["timestamp"])
+            # timestamps.append(info["timestamp"])
             timestamps.append(time.time() - start_time)
 
         os.system('spd-say "stop"')
 
         if not drop_episode:
-
             os.system(f'spd-say "saving episode {ep_idx}"')
             ep_dict = {}
 
@@ -138,13 +129,14 @@ if __name__ == "__main__":
                 fname = f"{img_key}_episode_{ep_idx:06d}.mp4"
 
                 # store the reference to the video frame
-                ep_dict[f"observation.{img_key}"] = [
-                    {"path": f"videos/{fname}", "timestamp": tstp} for tstp in timestamps
-                ]
+                ep_dict[f"observation.{img_key}"] = [{"path": f"videos/{fname}", "timestamp": tstp} for tstp in timestamps]
 
-            state = torch.tensor(np.concatenate([np.array(obs_replay["arm_qpos"]), 
-                                                 np.array(obs_replay["arm_qvel"]), 
-                                                 np.array(obs_replay["object_qpos"])], axis=1))
+            state = torch.tensor(
+                np.concatenate(
+                    [np.array(obs_replay["arm_qpos"]), np.array(obs_replay["arm_qvel"]), np.array(obs_replay["object_qpos"])],
+                    axis=1,
+                )
+            )
             action = torch.tensor(np.array(obs_replay["action"]))
             next_done = torch.zeros(num_frames, dtype=torch.bool)
             next_done[-1] = True
@@ -170,7 +162,6 @@ if __name__ == "__main__":
 
     env.close()
 
-
     os.system('spd-say "encode video frames"')
     for ep_idx in range(num_episodes):
         for img_key in env.cameras:
@@ -181,24 +172,20 @@ if __name__ == "__main__":
             )
 
     os.system('spd-say "concatenate episodes"')
-    data_dict = concatenate_episodes(
-        ep_dicts
-    )  # Since our fps varies we are sometimes off tolerance for the last frame
+    data_dict = concatenate_episodes(ep_dicts)  # Since our fps varies we are sometimes off tolerance for the last frame
 
     features = {}
 
     keys = [key for key in data_dict if "observation.image_" in key]
     for key in keys:
-        features[key.replace("observation.image_","observation.images.")] = VideoFrame()
-        data_dict[key.replace("observation.image_","observation.images.")] = data_dict[key]
+        features[key.replace("observation.image_", "observation.images.")] = VideoFrame()
+        data_dict[key.replace("observation.image_", "observation.images.")] = data_dict[key]
         del data_dict[key]
 
     features["observation.state"] = Sequence(
         length=data_dict["observation.state"].shape[1], feature=Value(dtype="float32", id=None)
     )
-    features["action"] = Sequence(
-        length=data_dict["action"].shape[1], feature=Value(dtype="float32", id=None)
-    )
+    features["action"] = Sequence(length=data_dict["action"].shape[1], feature=Value(dtype="float32", id=None))
     features["episode_index"] = Value(dtype="int64", id=None)
     features["frame_index"] = Value(dtype="int64", id=None)
     features["timestamp"] = Value(dtype="float32", id=None)
@@ -222,7 +209,7 @@ if __name__ == "__main__":
         info=info,
         videos_dir=videos_dir,
     )
-    
+
     os.system('spd-say "compute stats"')
     stats = compute_stats(lerobot_dataset, num_workers=args.num_workers)
 
