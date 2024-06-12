@@ -35,9 +35,7 @@ jobs:
         conda install -c conda-forge freeglut --yes
         conda install -c conda-forge glew --yes
         conda install -c conda-forge mesalib --yes
-        conda install -c conda-forge glfw --yes
         conda install -c conda-forge libglu --yes
-        conda install -c conda-forge glfw --yes
         pip install --upgrade pip
         pip install -e .
         pip install pytest
