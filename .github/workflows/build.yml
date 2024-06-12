@@ -28,9 +28,6 @@ jobs:
         sudo apt-get install -y ffmpeg libsm6 libxext6
         sudo apt-get install -y python3-opengl
         sudo apt install libosmesa6 -y
-        export CPATH=$CONDA_PREFIX/include
-        export C_INCLUDE_PATH=$CONDA_PREFIX/include
-        export LIBRARY_PATH=$CONDA_PREFIX/lib
         conda install pip --yes
         pip install --upgrade pip
         pip install -e .
