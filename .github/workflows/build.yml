@@ -16,18 +16,11 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: ${{ matrix.python-version }}
         auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
         activate-environment: test-env
-        use-mamba: true
-
-    - name: Create conda environment
-      run: conda create --name test-env python=${{ matrix.python-version }} --yes
-
-    - name: Activate conda environment
-      run: conda activate test-env
 
     - name: Install dependencies
       run: |
