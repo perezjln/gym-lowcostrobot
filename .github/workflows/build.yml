@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-13]
+        os: [ubuntu-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11']
     env:
       MUJOCO_GL: osmesa
