@@ -34,6 +34,7 @@ jobs:
         conda install -c conda-forge glfw --yes
         conda install -c conda-forge libx11 --yes
         conda install -c menpo glfw3 --yes
+        conda install -c menpo osmesa --yes
         pip install --upgrade pip
         pip install -e .
         pip install pytest
