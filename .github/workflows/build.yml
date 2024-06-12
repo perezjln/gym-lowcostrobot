@@ -29,6 +29,9 @@ jobs:
         conda install -c anaconda mesa-libgl-cos6-x86_64
         conda install -c menpo glfw3
         export CPATH=$CONDA_PREFIX/include
+        cd $CONDA_PREFIX/lib/
+        cp /usr/lib/libGL.so.1 .
+        ln -s libGL.so.1 libGL.so
         pip install --upgrade pip
         pip install -e .
         pip install pytest
