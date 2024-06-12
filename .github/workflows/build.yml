@@ -41,7 +41,6 @@ jobs:
         conda install -c conda-forge mesa-libgl-cos7-x86_64 --yes
         conda install -c menpo glfw3 --yes
         conda install -c menpo osmesa --yes
-        conda install anaconda::mesa-libgl-cos6-x86_64 --yes
         pip install --upgrade pip
         pip install -e .
         pip install pytest
