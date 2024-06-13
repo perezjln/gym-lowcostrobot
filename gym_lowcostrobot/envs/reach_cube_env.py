@@ -186,9 +186,8 @@ class ReachCubeEnv(Env):
         observation = self.get_observation()
 
         # Get the position of the cube and the distance between the end effector and the cube
-        cube_pos = self.data.qpos[:3]
-        ee_id = self.model.body("moving_side").id
-        ee_pos = self.data.geom_xpos[ee_id]
+        cube_pos = self.data.xpos[2]
+        ee_pos = self.data.xpos[8]
         ee_to_cube = np.linalg.norm(ee_pos - cube_pos)
 
         # Compute the reward
