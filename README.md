@@ -118,9 +118,10 @@ For significant changes, please open an issue first to discuss what you would li
 
 Currently, our todo list is:
 
+- [ ] Load and replay one theRobotDataset in simulation.
 - [ ] Improve the fidelity of the simulation.
 - [ ] Implement inverse kinematics in each environment.
-- [ ] Implement the real-world interface.
+- [ ] Implement the real-world interface, seemless interface with real-world observations, motor.
 - [ ] Provide reward shaping functions.
 
 ## License
