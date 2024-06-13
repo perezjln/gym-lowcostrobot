@@ -120,8 +120,8 @@ Currently, our todo list is:
 
 - [ ] Load and replay one `LeRobotDataset` in simulation.
 - [ ] Implement controller interface for simulation, like lowcostrobot-leader
-- [ ] Provide reward shaping functions, get inspired from meta-world .
 - [ ] Implement inverse kinematics in each environment.
+- [ ] Provide reward shaping functions, get inspired from meta-world .
 - [ ] Implement the real-world interface, seemless interface with real-world observations, motor.
 - [ ] Improve the fidelity of the simulation.
 
