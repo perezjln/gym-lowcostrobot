@@ -120,6 +120,7 @@ Currently, our todo list is:
 
 - [ ] Load and replay one `LeRobotDataset` in simulation.
 - [ ] Implement inverse kinematics in each environment.
+- [ ] Train policies with SB3
 - [ ] Implement controller interface for simulation, like lowcostrobot-leader
 - [ ] Provide reward shaping functions, get inspired from meta-world .
 - [ ] Implement the real-world interface, seemless interface with real-world observations, motor.
