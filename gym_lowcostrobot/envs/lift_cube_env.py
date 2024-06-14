@@ -113,6 +113,55 @@ class LiftCubeEnv(Env):
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
 
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6):
+        """
+        Computes the inverse kinematics for a robotic arm to reach the target end effector position.
+
+        :param ee_target_pos: numpy array of target end effector position [x, y, z]
+        :param step: float, step size for the iteration
+        :param joint_name: str, name of the end effector joint
+        :param nb_dof: int, number of degrees of freedom
+        :param regularization: float, regularization factor for the pseudoinverse computation
+        :return: numpy array of target joint positions
+        """
+        try:
+            # Get the joint ID from the name
+            joint_id = self.model.body(joint_name).id
+        except KeyError:
+            raise ValueError(f"Body name '{joint_name}' not found in the model.")
+
+        # Get the current end effector position
+        # ee_pos = self.d.geom_xpos[joint_id]
+        ee_id = self.model.body(joint_name).id
+        ee_pos = self.data.geom_xpos[ee_id]
+
+        # Compute the Jacobian
+        jac = np.zeros((3, self.model.nv))
+        mujoco.mj_jacBodyCom(self.model, self.data, jac, None, joint_id)
+
+        # Compute the difference between target and current end effector positions
+        delta_pos = ee_target_pos - ee_pos
+
+        # Compute the pseudoinverse of the Jacobian with regularization
+        jac_reg = jac[:, :nb_dof].T @ jac[:, :nb_dof] + regularization * np.eye(nb_dof)
+        jac_pinv = np.linalg.inv(jac_reg) @ jac[:, :nb_dof].T
+
+        # Compute target joint velocities
+        qdot = jac_pinv @ delta_pos
+
+        # Normalize joint velocities to avoid excessive movements
+        qdot_norm = np.linalg.norm(qdot)
+        if qdot_norm > 1.0:
+            qdot /= qdot_norm
+
+        # Read the current joint positions
+        qpos = self.data.qpos[:nb_dof]
+
+        # Compute the new joint positions
+        q_target_pos = qpos + qdot * step
+
+        return q_target_pos    
+
     def apply_action(self, action):
         """
         Step the simulation forward based on the action
@@ -122,7 +171,7 @@ class LiftCubeEnv(Env):
         - Joint mode: [q1, q2, q3, q4, q5, q6, gripper]
         """
         if self.action_mode == "ee":
-            raise NotImplementedError("EE mode not implemented yet")
+            #raise NotImplementedError("EE mode not implemented yet")
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action
