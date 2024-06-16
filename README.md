@@ -118,8 +118,8 @@ For significant changes, please open an issue first to discuss what you would li
 
 Currently, our todo list is:
 
-- [ ] Load and replay one `LeRobotDataset` in simulation.
-- [ ] Implement inverse kinematics in each environment.
+- [X] Load and replay one `LeRobotDataset` in simulation.
+- [X] Implement inverse kinematics in each environment, improvements remain very welcome.
 - [ ] Train policies with SB3
 - [ ] Implement controller interface for simulation, like lowcostrobot-leader
 - [ ] Provide reward shaping functions, get inspired from meta-world .

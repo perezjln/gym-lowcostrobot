@@ -116,7 +116,8 @@ class ReachCubeEnv(Env):
         self.target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
         self.q0 = (self.target_high + self.target_low) / 2 # home position
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, damping=0.001, regularization=1.0):
+
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6, home_position=None, nullspace_weight=1.):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
@@ -124,10 +125,14 @@ class ReachCubeEnv(Env):
         :param step: float, step size for the iteration
         :param joint_name: str, name of the end effector joint
         :param nb_dof: int, number of degrees of freedom
-        :param damping: float, damping factor for the pseudoinverse computation
-        :param regularization: float, regularization factor for the nullspace computation
+        :param regularization: float, regularization factor for the pseudoinverse computation
+        :param home_position: numpy array of home joint positions to regularize towards
+        :param nullspace_weight: float, weight for the nullspace regularization
         :return: numpy array of target joint positions
         """
+        if home_position is None:
+            home_position = np.zeros(nb_dof)  # Default to zero if no home position is provided
+
         try:
             # Get the joint ID from the name
             joint_id = self.model.body(joint_name).id
@@ -143,7 +148,7 @@ class ReachCubeEnv(Env):
         error = ee_target_pos - ee_pos
         jac = np.zeros((3, self.model.nv))
         q_pos = self.data.qpos[7:13].copy()
-        Kn = np.ones(nb_dof) * regularization
+        Kn = np.ones(nb_dof) * nullspace_weight
 
         while np.linalg.norm(error) > ERROR_TOLERANCE and i < MAX_ITERATIONS:
             # Compute the Jacobian
@@ -156,13 +161,13 @@ class ReachCubeEnv(Env):
             error = ee_target_pos - ee_pos
 
             # Compute the pseudoinverse of the Jacobian with damping, nv has 12 values
-            jac_reg = jac[:, 6:12].T @ jac[:, 6:12] + damping * np.eye(nb_dof)
+            jac_reg = jac[:, 6:12].T @ jac[:, 6:12] + regularization * np.eye(nb_dof)
             jac_pinv = np.linalg.inv(jac_reg) @ jac[:, 6:12].T
 
             # Compute target joint velocities
             qdot = jac_pinv @ error
             # try to keep the joint close to home position, otherwise the robot will move even if the target is reached
-            qdot += (np.eye(nb_dof) - np.linalg.pinv(jac[:, 6:12]) @ jac[:, 6:12]) @ (Kn * (self.q0 - q_pos))
+            qdot += (np.eye(nb_dof) - np.linalg.pinv(jac[:, 6:12]) @ jac[:, 6:12]) @ (Kn * (home_position - q_pos))
 
 
             # Normalize joint velocities to avoid excessive movements
@@ -187,6 +192,7 @@ class ReachCubeEnv(Env):
             print(f"Inverse kinematics converged in {i} iterations")
         return q_target_pos
 
+
     def apply_action(self, action):
         """
         Step the simulation forward based on the action
@@ -204,7 +210,7 @@ class ReachCubeEnv(Env):
             ee_target_pos = self.data.xpos[ee_id] + ee_action
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-            target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="moving_side", step=0.05)
+            target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="moving_side", home_position=self.q0, step=0.05)
             target_qpos[-1:] = gripper_action
         elif self.action_mode == "joint":
 
