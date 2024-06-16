@@ -1,4 +1,5 @@
 import gymnasium as gym
+import gym_lowcostrobot
 import torch
 from gymnasium.wrappers.filter_observation import FilterObservation
 from gymnasium.wrappers.flatten_observation import FlattenObservation
@@ -23,7 +24,7 @@ def do_td3_push():
 
 def make_env():
     env = gym.make("PushCube-v0", observation_mode="state", render_mode=None)
-    env = FilterObservation(env, ["arm_qpos", "object_qpos", "target_qpos"])
+    env = FilterObservation(env, ["arm_qpos", "cube_pos", "target_pos"])
     env = FlattenObservation(env)
     return env
 
@@ -38,7 +39,7 @@ def do_ppo_push(device="cpu", render=True):
 
     # Evaluate the agent
     env_test = gym.make("PushCube-v0", observation_mode="state", render_mode=None)
-    env_test = FilterObservation(env_test, ["arm_qpos", "object_qpos", "target_qpos"])
+    env_test = FilterObservation(env_test, ["arm_qpos", "cube_pos", "target_pos"])
     env_test = FlattenObservation(env_test)
     mean_reward, std_reward = evaluate_policy(model, env_test, n_eval_episodes=10, render=render)
     print(f"Mean reward: {mean_reward} +/- {std_reward}")
