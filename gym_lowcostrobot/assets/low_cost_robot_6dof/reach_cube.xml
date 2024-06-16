@@ -125,11 +125,11 @@
 	</worldbody>
 
 	<actuator>
-		<position joint="shoulder_pan_joint" ctrlrange="-3.14159 3.14159" ctrllimited="true" kp="40" />
-		<position joint="shoulder_lift_joint" ctrlrange="-1.5708 1.22173" ctrllimited="true" kp="40" />
-		<position joint="elbow_flex_joint" ctrlrange="-1.48353 1.74533" ctrllimited="true" kp="40" />
-		<position joint="wrist_flex_joint" ctrlrange="-1.91986 1.91986" ctrllimited="true" kp="40" />
-		<position joint="wrist_roll_joint" ctrlrange="-2.96706 2.96706" ctrllimited="true" kp="40" />
-		<position joint="gripper_joint" ctrlrange="-1.74533 0.0523599" ctrllimited="true" kp="40" />
+		<position joint="shoulder_pan_joint" ctrlrange="-3.14159 3.14159" ctrllimited="true" kp="20" />
+		<position joint="shoulder_lift_joint" ctrlrange="-1.5708 1.22173" ctrllimited="true" kp="20" />
+		<position joint="elbow_flex_joint" ctrlrange="-1.48353 1.74533" ctrllimited="true" kp="20" />
+		<position joint="wrist_flex_joint" ctrlrange="-1.91986 1.91986" ctrllimited="true" kp="20" />
+		<position joint="wrist_roll_joint" ctrlrange="-2.96706 2.96706" ctrllimited="true" kp="20" />
+		<position joint="gripper_joint" ctrlrange="-1.74533 0.0523599" ctrllimited="true" kp="20" />
 	</actuator>
 </mujoco>
