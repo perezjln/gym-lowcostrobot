@@ -113,7 +113,8 @@ class ReachCubeEnv(Env):
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6):
+
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6, home_position=None, nullspace_weight=0.1):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
@@ -122,8 +123,13 @@ class ReachCubeEnv(Env):
         :param joint_name: str, name of the end effector joint
         :param nb_dof: int, number of degrees of freedom
         :param regularization: float, regularization factor for the pseudoinverse computation
+        :param home_position: numpy array of home joint positions to regularize towards
+        :param nullspace_weight: float, weight for the nullspace regularization
         :return: numpy array of target joint positions
         """
+        if home_position is None:
+            home_position = np.zeros(nb_dof)  # Default to zero if no home position is provided
+
         try:
             # Get the joint ID from the name
             joint_id = self.model.body(joint_name).id
@@ -131,7 +137,6 @@ class ReachCubeEnv(Env):
             raise ValueError(f"Body name '{joint_name}' not found in the model.")
 
         # Get the current end effector position
-        # ee_pos = self.d.geom_xpos[joint_id]
         ee_id = self.model.body(joint_name).id
         ee_pos = self.data.geom_xpos[ee_id]
 
@@ -149,18 +154,21 @@ class ReachCubeEnv(Env):
         # Compute target joint velocities
         qdot = jac_pinv @ delta_pos
 
+        # Add nullspace regularization to keep joint positions close to the home position
+        qpos = self.data.qpos[:nb_dof]
+        nullspace_reg = nullspace_weight * (home_position - qpos)
+        qdot += nullspace_reg
+
         # Normalize joint velocities to avoid excessive movements
         qdot_norm = np.linalg.norm(qdot)
         if qdot_norm > 1.0:
             qdot /= qdot_norm
 
-        # Read the current joint positions
-        qpos = self.data.qpos[:nb_dof]
-
         # Compute the new joint positions
         q_target_pos = qpos + qdot * step
 
         return q_target_pos
+
 
     def apply_action(self, action):
         """

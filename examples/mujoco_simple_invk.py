@@ -33,9 +33,9 @@ def do_simple_trajectory_end_effector(current_pos, target_pos):
 
 def do_simple_invk(robot_id="6dof", do_reset=False):
     if robot_id == "6dof":
-        path_scene = "gym_lowcostrobot/assets/low_cost_robot_6dof/scene_one_cube.xml"
+        path_scene = "gym_lowcostrobot/assets/low_cost_robot_6dof/reach_cube.xml"
         joint_name = "moving_side"
-        object_id = "red_box_joint"
+        object_id = "cube"
         nb_dof = 6
         min_dist = 0.02
         max_dist = 0.35
@@ -60,7 +60,7 @@ def do_simple_invk(robot_id="6dof", do_reset=False):
         # Run the simulation
         while viewer.is_running():
             step_start = time.time()
-            q_target_pos = robot.inverse_kinematics_reg(ee_target_pos=cube_pos, joint_name=joint_name, nb_dof=nb_dof, step=0.2)
+            q_target_pos = robot.inverse_kinematics_reg(ee_target_pos=cube_pos, joint_name=joint_name, nb_dof=nb_dof, step=0.4)
             q_target_pos[-1] = 0.0
             robot.set_target_qpos(q_target_pos)
 
