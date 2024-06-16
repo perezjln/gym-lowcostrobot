@@ -5,7 +5,7 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 
-from gym_lowcostrobot.simulated_robot import SimulatedRobot
+from gym_lowcostrobot.simulated_robot import LevenbegMarquardtIK
 
 
 def displace_object(data, m, object_id, viewer, square_size=0.2, invert_y=False, origin_pos=[0, 0.1]):
@@ -20,15 +20,8 @@ def displace_object(data, m, object_id, viewer, square_size=0.2, invert_y=False,
     # data.joint(object_id).qpos[:3] = [np.random.rand() * coef_sample + min_dist_obj, np.random.rand() * coef_sample + min_dist_obj, 0.01]
     data.joint(object_id).qpos[:3] = [x, y, 0.01]
 
-    mujoco.mj_step(m, data)
+    mujoco.mj_forward(m, data)
     viewer.sync()
-
-
-def do_simple_trajectory_end_effector(current_pos, target_pos):
-    # Define the trajectory
-    nb_points = 10
-    traj = np.linspace(current_pos, target_pos, nb_points)
-    return traj
 
 
 def do_simple_invk(robot_id="6dof", do_reset=False):
@@ -36,8 +29,7 @@ def do_simple_invk(robot_id="6dof", do_reset=False):
         path_scene = "gym_lowcostrobot/assets/low_cost_robot_6dof/reach_cube.xml"
         joint_name = "moving_side"
         object_id = "cube"
-        nb_dof = 6
-        min_dist = 0.02
+        min_dist = 0.065
         max_dist = 0.35
         invert_y = False
         square_size = 0.2
@@ -47,7 +39,6 @@ def do_simple_invk(robot_id="6dof", do_reset=False):
 
     m = mujoco.MjModel.from_xml_path(path_scene)
     data = mujoco.MjData(m)
-    robot = SimulatedRobot(m, data)
 
     m.opt.timestep = 1 / 10000
 
@@ -60,27 +51,15 @@ def do_simple_invk(robot_id="6dof", do_reset=False):
         # Run the simulation
         while viewer.is_running():
             step_start = time.time()
-            q_target_pos = robot.inverse_kinematics_reg(ee_target_pos=cube_pos, joint_name=joint_name, nb_dof=nb_dof, step=0.4)
-            q_target_pos[-1] = 0.0
-            robot.set_target_qpos(q_target_pos)
 
-            # Step the simulation forward
-            mujoco.mj_step(m, data)
-            viewer.sync()
-
-            # Rudimentary time keeping, will drift relative to wall clock.
-            time_until_next_step = m.opt.timestep - (time.time() - step_start)
-            if time_until_next_step > 0:
-                time.sleep(time_until_next_step)
+            g_ik = LevenbegMarquardtIK(m, data, tol=min_dist)
+            g_ik.calculate(body_id=m.body(joint_name).id, goal=cube_pos, viewer=viewer)
 
             # Get the final position of the cube
-            cube_pos = data.joint(object_id).qpos[:3]
-            ee_id = m.body(joint_name).id
-            ee_pos = data.geom_xpos[ee_id]
-            print("Cube dist:", np.linalg.norm(cube_pos - ee_pos))
+            error = np.linalg.norm(np.subtract(cube_pos, data.body(m.body(joint_name).id).xpos))
 
             if do_reset:
-                if np.linalg.norm(cube_pos - ee_pos) < min_dist or np.linalg.norm(cube_pos - ee_pos) > max_dist:
+                if error < min_dist or error > max_dist:
                     print("Cube reached the target position")
 
                     # displace_object(data, m, object_id, coef_sample, min_dist_obj, viewer)
