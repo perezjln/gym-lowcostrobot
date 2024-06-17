@@ -1,7 +1,7 @@
 <mujoco model="bd1 scene">
-	<option timestep="0.005"/>
+	<option timestep="0.005" o_solimp=".89 .91 .01 0.5 2" o_solref=".01 1" />
 
-	<compiler angle="radian" autolimits="true"/>
+	<compiler angle="radian" autolimits="true" convexhull="false"/>
 
 	<asset>
 		<mesh name="base" file="base.stl"/>
@@ -38,7 +38,7 @@
 		<body name="cube" pos="0.1 0.1 0.01">
 			<freejoint name="cube"/>
 			<inertial pos="0 0 0" mass="0.1" diaginertia="0.00001125 0.00001125 0.00001125"/>
-			<geom friction="0.5" condim="3" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="cube" rgba="0.5 0 0 1" priority="1"/>
+			<geom friction="2.0 0.8 0.8"  condim="4" pos="0 0 0" size="0.01 0.01 0.01" type="box" name="cube" rgba="0.5 0 0 1" priority="1"/>
 		</body>
 
 
