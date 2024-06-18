@@ -125,7 +125,7 @@ Currently, our todo list is:
 - [ ] Provide reward shaping functions, get inspired from meta-world .
 - [ ] Implement the real-world interface, seemless interface with real-world observations, motor.
 - [ ] Improve the fidelity of the simulation.
-
+- [ ] Simplify the gripper mesh for more stable grasp.
 ## License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.

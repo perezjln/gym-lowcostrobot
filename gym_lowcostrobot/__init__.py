@@ -9,7 +9,7 @@ ASSETS_PATH = os.path.join(os.path.dirname(__file__), "assets/low_cost_robot_6do
 register(
     id="LiftCube-v0",
     entry_point="gym_lowcostrobot.envs:LiftCubeEnv",
-    max_episode_steps=500,
+    max_episode_steps=1500,
 )
 
 register(

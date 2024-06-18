@@ -175,12 +175,7 @@ class ReachCubeEnv(Env):
             if qdot_norm > 1.0:
                 qdot /= qdot_norm
 
-            # Read the current joint positions
-            # qpos = self.data.qpos[7:13]
-
-            # Compute the new joint positions
-            # q_target_pos = qpos + qdot * step
-
+            # Update the joint positions
             self.data.qpos[7:13] += qdot * step
             i += 1
         q_target_pos = self.data.qpos[7:13].copy()
@@ -191,7 +186,7 @@ class ReachCubeEnv(Env):
         else:
             print(f"Inverse kinematics converged in {i} iterations")
         return q_target_pos
-
+    
 
     def apply_action(self, action):
         """
@@ -213,8 +208,7 @@ class ReachCubeEnv(Env):
             target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="moving_side", home_position=self.q0, step=0.05)
             target_qpos[-1:] = gripper_action
         elif self.action_mode == "joint":
-
-            target_qpos = action * (self.target_high - self.target_low) / 2 + (self.target_high + self.target_low) / 2
+            target_qpos = action * (self.target_high - self.target_low) / 2 + self.q0
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
