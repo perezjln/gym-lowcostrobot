@@ -113,8 +113,16 @@ class ReachCubeEnv(Env):
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
 
-
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6, home_position=None, nullspace_weight=0.1):
+    def inverse_kinematics(
+        self,
+        ee_target_pos,
+        step=0.2,
+        joint_name="moving_side",
+        nb_dof=6,
+        regularization=1e-6,
+        home_position=None,
+        nullspace_weight=0.1,
+    ):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
@@ -169,7 +177,6 @@ class ReachCubeEnv(Env):
 
         return q_target_pos
 
-
     def apply_action(self, action):
         """
         Step the simulation forward based on the action
@@ -179,7 +186,7 @@ class ReachCubeEnv(Env):
         - Joint mode: [q1, q2, q3, q4, q5, q6, gripper]
         """
         if self.action_mode == "ee":
-            #raise NotImplementedError("EE mode not implemented yet")
+            # raise NotImplementedError("EE mode not implemented yet")
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action

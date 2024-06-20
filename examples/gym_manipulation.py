@@ -1,5 +1,6 @@
 import gymnasium as gym
-import gym_lowcostrobot
+
+import gym_lowcostrobot  # noqa
 
 
 def do_env_sim():

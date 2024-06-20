@@ -3,60 +3,55 @@ import numpy as np
 
 
 ## https://alefram.github.io/posts/Basic-inverse-kinematics-in-Mujoco
-#Levenberg-Marquardt method
+# Levenberg-Marquardt method
 class LevenbegMarquardtIK:
-    
     def __init__(self, model, data, tol=0.04, step_size=0.5):
         self.model = model
         self.data = data
-        self.jacp = np.zeros((3, model.nv)) #translation jacobian
-        self.jacr = np.zeros((3, model.nv)) #rotational jacobian
+        self.jacp = np.zeros((3, model.nv))  # translation jacobian
+        self.jacr = np.zeros((3, model.nv))  # rotational jacobian
         self.step_size = step_size
         self.tol = tol
         self.alpha = 0.5
-        self.damping =  0.15
-    
+        self.damping = 0.15
+
     def check_joint_limits(self, q):
         """Check if the joints is under or above its limits"""
         for i in range(len(q)):
-            q[i] = max(self.model.jnt_range[i][0], 
-                       min(q[i], self.model.jnt_range[i][1]))
+            q[i] = max(self.model.jnt_range[i][0], min(q[i], self.model.jnt_range[i][1]))
 
-    #Levenberg-Marquardt pseudocode implementation
+    # Levenberg-Marquardt pseudocode implementation
     def calculate(self, goal, body_id, viewer):
-
         """Calculate the desire joints angles for goal"""
         current_pose = self.data.body(body_id).xpos
         error = np.subtract(goal, current_pose)
 
-        while (np.linalg.norm(error) >= self.tol):
-
-            #calculate jacobian
+        while np.linalg.norm(error) >= self.tol:
+            # calculate jacobian
             mujoco.mj_jac(self.model, self.data, self.jacp, self.jacr, goal, body_id)
 
-            #calculate delta of joint q
+            # calculate delta of joint q
             n = self.jacp.shape[1]
-            I = np.identity(n)
-            product = self.jacp.T @ self.jacp + self.damping * I
-            
+            product = self.jacp.T @ self.jacp + self.damping * np.identity(n)
+
             if np.isclose(np.linalg.det(product), 0):
                 j_inv = np.linalg.pinv(product) @ self.jacp.T
             else:
                 j_inv = np.linalg.inv(product) @ self.jacp.T
-            
+
             delta_q = j_inv @ error
 
-            #compute next step
+            # compute next step
             self.data.qpos[:1] += self.step_size * delta_q
 
-            #check limits
-            #self.check_joint_limits(self.data.qpos)
+            # check limits
+            # self.check_joint_limits(self.data.qpos)
 
-            #compute forward kinematics
+            # compute forward kinematics
             mujoco.mj_forward(self.model, self.data)
             viewer.sync()
 
-            #calculate new error
+            # calculate new error
             error = np.subtract(goal, self.data.body(body_id).xpos)
             print("Error: ", np.linalg.norm(error))
 
@@ -190,7 +185,16 @@ class SimulatedRobot:
 
         return q_target_pos
 
-    def inverse_kinematics_null_reg(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6, home_position=None, nullspace_weight=0.1):
+    def inverse_kinematics_null_reg(
+        self,
+        ee_target_pos,
+        step=0.2,
+        joint_name="moving_side",
+        nb_dof=6,
+        regularization=1e-6,
+        home_position=None,
+        nullspace_weight=0.1,
+    ):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
