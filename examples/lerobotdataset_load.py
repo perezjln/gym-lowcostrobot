@@ -5,8 +5,6 @@ import mujoco.viewer
 
 from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 
-
-
 def main():
 
     # You can easily load a dataset from a Hugging Face repository

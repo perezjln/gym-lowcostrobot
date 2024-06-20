@@ -5,7 +5,7 @@ import mujoco
 import mujoco.viewer
 import numpy as np
 
-from gym_lowcostrobot.simulated_robot import LevenbegMarquardtIK
+from gym_lowcostrobot.interface.simulated_robot import LevenbegMarquardtIK
 
 
 def displace_object(data, m, object_id, viewer, square_size=0.2, invert_y=False, origin_pos=[0, 0.1]):
