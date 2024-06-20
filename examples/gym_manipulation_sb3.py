@@ -1,11 +1,12 @@
 import gymnasium as gym
-import gym_lowcostrobot
 import torch
 from gymnasium.wrappers.filter_observation import FilterObservation
 from gymnasium.wrappers.flatten_observation import FlattenObservation
 from stable_baselines3 import PPO, TD3
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
+
+import gym_lowcostrobot  # noqa
 
 
 def do_td3_push():

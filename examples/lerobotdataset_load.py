@@ -1,14 +1,11 @@
-import argparse, time
+import argparse
 
 import mujoco
 import mujoco.viewer
-
 from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
 
 
-
 def main():
-
     # You can easily load a dataset from a Hugging Face repository
     dataset = LeRobotDataset(args.repo_id)
     print(f"\n{dataset[0]['observation.images.cam_high'].shape=}")  # (4,c,h,w)
@@ -23,21 +20,21 @@ def main():
     print(f"Starting episode {current_episode}")
     with mujoco.viewer.launch_passive(model, data) as viewer:
         # Run the simulation
-        
+
         step = 0
         while viewer.is_running():
-
             if step in dataset.episode_data_index["from"]:
                 current_episode += 1
-                mujoco.mj_resetData(model, data) 
+                mujoco.mj_resetData(model, data)
                 print(f"Starting episode {current_episode}")
 
             # Step the simulation forward
-            data.ctrl = dataset[step]['observation.state']
+            data.ctrl = dataset[step]["observation.state"]
             mujoco.mj_step(model, data)
 
             viewer.sync()
             step += 1
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Replay trajectories from leRobotDataset hub")

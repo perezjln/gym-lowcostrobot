@@ -175,7 +175,6 @@ class PushCubeEnv(Env):
         - Joint mode: [q1, q2, q3, q4, q5, q6, gripper]
         """
         if self.action_mode == "ee":
-            #raise NotImplementedError("EE mode not implemented yet")
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action

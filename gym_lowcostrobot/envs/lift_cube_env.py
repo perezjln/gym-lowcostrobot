@@ -109,49 +109,34 @@ class LiftCubeEnv(Env):
             self.rgb_array_renderer = mujoco.Renderer(self.model, height=640, width=640)
 
         # Set additional utils
-        self.done = False # termination flag
-        self.success = False # success flag
         self.threshold_height = 0.5
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
-        self.target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
-        self.target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-        self.q0 = (self.target_high + self.target_low) / 2 # home position
-        self.q0[3] += 1.57
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6, home_position=None, nullspace_weight=1.):
+    def inverse_kinematics(self, ee_target_pos):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
         :param ee_target_pos: numpy array of target end effector position [x, y, z]
-        :param step: float, step size for the iteration
-        :param joint_name: str, name of the end effector joint
-        :param nb_dof: int, number of degrees of freedom
-        :param regularization: float, regularization factor for the pseudoinverse computation
-        :param home_position: numpy array of home joint positions to regularize towards
-        :param nullspace_weight: float, weight for the nullspace regularization
         :return: numpy array of target joint positions
         """
-        if home_position is None:
-            home_position = np.zeros(nb_dof)  # Default to zero if no home position is provided
+        home_position = np.zeros(6)  # Default to zero if no home position is provided
+        joint_id = self.model.body("moving_side").id
 
-        try:
-            # Get the joint ID from the name
-            joint_id = self.model.body(joint_name).id
-        except KeyError:
-            raise ValueError(f"Body name '{joint_name}' not found in the model.")
-        
-        ERROR_TOLERANCE = 1e-2
-        MAX_ITERATIONS = 10
-        i = 0
-        # Get the current end effector position
+        error_tolerance = 1e-2  # error tolerance for the end effector position
+        max_iterations = 10  # maximum number of iterations
+        step = 0.05  # step size for the iteration
+        regularization = 1e-6  # regularization factor for the pseudoinverse computation
+        nullspace_weight = 1.0  # weight for the nullspace regularization
+
         ee_pos = self.data.xpos[joint_id]
         error = ee_target_pos - ee_pos
         jac = np.zeros((3, self.model.nv))
         q_pos = self.data.qpos[7:13].copy()
-        Kn = np.ones(nb_dof) * nullspace_weight
+        Kn = np.ones(6) * nullspace_weight
 
-        while np.linalg.norm(error) > ERROR_TOLERANCE and i < MAX_ITERATIONS:
+        num_iterations = 0
+        while np.linalg.norm(error) > error_tolerance and num_iterations < max_iterations:
             # Compute the Jacobian
             # mujoco.mj_step(self.model, self.data)
             mujoco.mj_forward(self.model, self.data)
@@ -162,14 +147,13 @@ class LiftCubeEnv(Env):
             error = ee_target_pos - ee_pos
 
             # Compute the pseudoinverse of the Jacobian with damping, nv has 12 values
-            jac_reg = jac[:, 6:12].T @ jac[:, 6:12] + regularization * np.eye(nb_dof)
+            jac_reg = jac[:, 6:12].T @ jac[:, 6:12] + regularization * np.eye(6)
             jac_pinv = np.linalg.inv(jac_reg) @ jac[:, 6:12].T
 
             # Compute target joint velocities
             qdot = jac_pinv @ error
             # try to keep the joint close to home position, otherwise the robot will move even if the target is reached
-            qdot += (np.eye(nb_dof) - np.linalg.pinv(jac[:, 6:12]) @ jac[:, 6:12]) @ (Kn * (home_position - q_pos))
-
+            qdot += (np.eye(6) - np.linalg.pinv(jac[:, 6:12]) @ jac[:, 6:12]) @ (Kn * (home_position - q_pos))
 
             # Normalize joint velocities to avoid excessive movements
             qdot_norm = np.linalg.norm(qdot)
@@ -178,16 +162,11 @@ class LiftCubeEnv(Env):
 
             # Update the joint positions
             self.data.qpos[7:13] += qdot * step
-            i += 1
+            num_iterations += 1
+
         q_target_pos = self.data.qpos[7:13].copy()
         self.data.qpos[7:13] = q_pos
-        if i == MAX_ITERATIONS:
-            print("Inverse kinematics did not converge")
-            print(f"Error: {error}")
-        else:
-            print(f"Inverse kinematics converged in {i} iterations")
         return q_target_pos
-    
 
     def apply_action(self, action):
         """
@@ -198,7 +177,6 @@ class LiftCubeEnv(Env):
         - Joint mode: [q1, q2, q3, q4, q5, q6, gripper]
         """
         if self.action_mode == "ee":
-            #raise NotImplementedError("EE mode not implemented yet")
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action
@@ -206,10 +184,12 @@ class LiftCubeEnv(Env):
             ee_target_pos = self.data.xpos[ee_id] + ee_action
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-            target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="moving_side", home_position=self.q0, step=0.05)
+            target_qpos = self.inverse_kinematics(ee_target_pos)
             target_qpos[-1:] = gripper_action
         elif self.action_mode == "joint":
-            target_qpos = action * (self.target_high - self.target_low) / 2 + self.q0
+            target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
+            target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
+            target_qpos = action * (target_high - target_low) / 2 + (target_high + target_low) / 2
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
@@ -246,8 +226,6 @@ class LiftCubeEnv(Env):
         cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.data.qpos[:] = np.concatenate([cube_pos, cube_rot, robot_qpos])
-        self.done = False
-        self.success = False
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -267,19 +245,13 @@ class LiftCubeEnv(Env):
         ee_id = self.model.body("moving_side").id
         ee_pos = self.data.xpos[ee_id]
         ee_to_cube = np.linalg.norm(ee_pos - cube_pos)
-        print(f"Cube position: {cube_pos}, EE position: {ee_pos}, Distance: {ee_to_cube}")
 
         # Compute the reward
         reward_height = cube_z - self.threshold_height
         reward_distance = -ee_to_cube
-        # reward = reward_height + reward_distance
-        reward = reward_distance
-        if ee_to_cube < 0.049:
-            self.done = True
-            self.success = True
+        reward = reward_height + reward_distance
         info = {}
-        info["success"] = self.success
-        return observation, reward, self.done, False, info
+        return observation, reward, False, False, info
 
     def render(self):
         if self.render_mode == "human":
