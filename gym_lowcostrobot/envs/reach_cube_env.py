@@ -114,10 +114,18 @@ class ReachCubeEnv(Env):
         self.cube_high = np.array([0.15, 0.25, 0.015])
         self.target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
         self.target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-        self.q0 = (self.target_high + self.target_low) / 2 # home position
+        self.q0 = (self.target_high + self.target_low) / 2  # home position
 
-
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6, home_position=None, nullspace_weight=1.):
+    def inverse_kinematics(
+        self,
+        ee_target_pos,
+        step=0.2,
+        joint_name="moving_side",
+        nb_dof=6,
+        regularization=1e-6,
+        home_position=None,
+        nullspace_weight=1.0,
+    ):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
@@ -138,7 +146,7 @@ class ReachCubeEnv(Env):
             joint_id = self.model.body(joint_name).id
         except KeyError:
             raise ValueError(f"Body name '{joint_name}' not found in the model.")
-        
+
         ERROR_TOLERANCE = 1e-2
         MAX_ITERATIONS = 10
         i = 0
@@ -169,7 +177,6 @@ class ReachCubeEnv(Env):
             # try to keep the joint close to home position, otherwise the robot will move even if the target is reached
             qdot += (np.eye(nb_dof) - np.linalg.pinv(jac[:, 6:12]) @ jac[:, 6:12]) @ (Kn * (home_position - q_pos))
 
-
             # Normalize joint velocities to avoid excessive movements
             qdot_norm = np.linalg.norm(qdot)
             if qdot_norm > 1.0:
@@ -186,7 +193,6 @@ class ReachCubeEnv(Env):
         else:
             print(f"Inverse kinematics converged in {i} iterations")
         return q_target_pos
-    
 
     def apply_action(self, action):
         """
@@ -197,7 +203,7 @@ class ReachCubeEnv(Env):
         - Joint mode: [q1, q2, q3, q4, q5, q6, gripper]
         """
         if self.action_mode == "ee":
-            #raise NotImplementedError("EE mode not implemented yet")
+            # raise NotImplementedError("EE mode not implemented yet")
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action
@@ -205,7 +211,9 @@ class ReachCubeEnv(Env):
             ee_target_pos = self.data.xpos[ee_id] + ee_action
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
-            target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos, joint_name="moving_side", home_position=self.q0, step=0.05)
+            target_qpos = self.inverse_kinematics(
+                ee_target_pos=ee_target_pos, joint_name="moving_side", home_position=self.q0, step=0.05
+            )
             target_qpos[-1:] = gripper_action
         elif self.action_mode == "joint":
             target_qpos = action * (self.target_high - self.target_low) / 2 + self.q0
