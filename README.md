@@ -118,14 +118,21 @@ For significant changes, please open an issue first to discuss what you would li
 
 Currently, our todo list is:
 
-- [X] Load and replay one `LeRobotDataset` in simulation.
-- [X] Implement inverse kinematics in each environment, improvements remain very welcome.
+- [x] Load and replay one `LeRobotDataset` in simulation
+- [x] Implement inverse kinematics in each environment, improvements remain very welcome
+
+Training related:
 - [ ] Train policies with SB3
+- [ ] Provide reward shaping functions, get inspired from meta-world
+
+Real-world related:
 - [ ] Implement controller interface for simulation, like lowcostrobot-leader
-- [ ] Provide reward shaping functions, get inspired from meta-world .
-- [ ] Implement the real-world interface, seemless interface with real-world observations, motor.
-- [ ] Improve the fidelity of the simulation.
-- [ ] Simplify the gripper mesh for more stable grasp.
+- [ ] Implement the real-world interface, seemless interface with real-world observations, motor
+
+Improve the fidelity of the simulation:
+- [ ] Parameter identification (kp, dampping, ...)
+- [ ] Simplify the gripper mesh for more stable grasp and add collision shape
+
 ## License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
