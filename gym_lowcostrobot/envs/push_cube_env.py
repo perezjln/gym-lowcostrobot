@@ -229,6 +229,8 @@ class PushCubeEnv(Env):
 
         # Sample the target position
         self.target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
+        target_geom_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SITE, "cube_target")
+        self.model.site_pos[target_geom_id] = self.target_pos
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
