@@ -92,6 +92,46 @@ export MUJOCO_GL=osmesa
 export DISPLAY=:0
 ```
 
+## Training Policies with Stable Baselines3 and RL Zoo3 - step-by-step guide
+
+To train a reinforcement learning policy using Stable Baselines3 and RL Zoo3, you need to define a configuration file and then launch the training process.
+
+### Step 1: Define a Configuration File
+
+Create a YAML configuration file specifying the training parameters for your environment. Below is an example configuration for the `ReachCube-v0` environment:
+
+```yaml
+ReachCube-v0:
+  n_timesteps: !!float 1e7
+  policy: 'MultiInputPolicy'
+  frame_stack: 3
+  use_sde: True
+```
+
+- `n_timesteps`: The number of timesteps to train the model. Here, it is set to 10 million.
+- `policy`: The policy type to be used. In this case, it is set to `'MultiInputPolicy'`.
+- `frame_stack`: The number of frames to stack, which is 3 in this example.
+- `use_sde`: A boolean indicating whether to use State-Dependent Exploration (SDE). It is set to `True`.
+
+### Step 2: Launch the Training Process
+
+After defining the configuration file, you can start the training of your policy using the following command:
+
+```sh
+python -u -m rl_zoo3.train --algo tqc --env ReachCube-v0 --gym-packages gym_lowcostrobot --conf rl_zoo3_conf.yaml --env-kwargs observation_mode:'"both"' -orga <huggingface_user> -f logs
+```
+
+- `python -u -m rl_zoo3.train`: Executes the training module from RL Zoo3.
+- `--algo tqc`: Specifies the algorithm to use, in this case, TQC (Truncated Quantile Critics).
+- `--env ReachCube-v0`: Specifies the environment to train on.
+- `--gym-packages gym_lowcostrobot`: Includes the necessary gym packages for your environment.
+- `--conf rl_zoo3_conf.yaml`: Points to the configuration file you created.
+- `--env-kwargs observation_mode:'"both"'`: Passes additional environment-specific arguments.
+- `-orga <huggingface_user>`: Specifies the Hugging Face organization/user where the model will be stored.
+- `-f logs`: Specifies the directory where the training logs will be saved.
+
+For more detailed information on the available options and configurations, refer to the RL Zoo3 documentation.
+
 ## Contributing
 
 We welcome contributions to the project! Please follow these general guidelines:

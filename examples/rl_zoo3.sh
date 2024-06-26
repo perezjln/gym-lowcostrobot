@@ -1,0 +1,1 @@
+python -u -m rl_zoo3.train --algo tqc --env ReachCube-v0 --gym-packages gym_lowcostrobot -conf rl_zoo3_conf.yaml --env-kwargs observation_mode:'"state"'
