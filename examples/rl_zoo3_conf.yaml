@@ -25,4 +25,3 @@ ReachCube-v0:
   policy: 'MultiInputPolicy'
   frame_stack: 1  # Disable frame stacking if not needed
   use_sde: True
-  observation_mode: state
