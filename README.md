@@ -31,6 +31,7 @@ By leveraging these open-source tools, we believe that more individuals, researc
 To install the package, use the following command:
 
 ```bash
+pip install rl_zoo3
 pip install git+https://github.com/perezjln/gym-lowcostrobot.git
 ```
 
