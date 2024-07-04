@@ -13,7 +13,7 @@ https://github.com/perezjln/gym-lowcostrobot/assets/45557362/cb724171-3c0e-467f-
 - **Action Definitions**: The environments support both Cartesian and Joint control, allowing for diverse tasks.
 - **State Definitions**: The state of the robot is defined using proprioception (joint position) and visual input from multiple cameras, enabling advanced perception capabilities on non-equipped environments.
 - **Rearrangement Tasks**: A set of rearrangement tasks involving single and multiple cubic objects is provided as a starting point. These tasks are designed to help users begin experimenting with and developing robotic manipulation skills.
-- **Dataset Recording**: Included is a [recording script](https://github.com/perezjln/gym-lowcostrobot/blob/main/examples/trace_lerobotdataset.py) that allows users to build datasets in the `LeRobotDataset` format. This format is defined by the [🤗 Hugging Face LeRobot library](https://github.com/huggingface/lerobot), allowing to share and mutualize experiments among users and tasks.
+- **Dataset Recording**: Included is a [recording script](https://github.com/perezjln/gym-lowcostrobot/blob/main/examples/lerobotdataset_save.py) that allows users to build datasets in the `LeRobotDataset` format. This format is defined by the [🤗 Hugging Face LeRobot library](https://github.com/huggingface/lerobot), allowing to share and mutualize experiments among users and tasks.
 
 ### Goals
 
