@@ -31,6 +31,7 @@ By leveraging these open-source tools, we believe that more individuals, researc
 To install the package, use the following command:
 
 ```bash
+pip install rl_zoo3
 pip install git+https://github.com/perezjln/gym-lowcostrobot.git
 ```
 
@@ -118,7 +119,7 @@ ReachCube-v0:
 After defining the configuration file, you can start the training of your policy using the following command:
 
 ```sh
-python -u -m rl_zoo3.train --algo tqc --env ReachCube-v0 --gym-packages gym_lowcostrobot --conf rl_zoo3_conf.yaml --env-kwargs observation_mode:'"both"' -orga <huggingface_user> -f logs
+python -u -m rl_zoo3.train --algo tqc --env ReachCube-v0 --gym-packages gym_lowcostrobot -conf examples/rl_zoo3_conf.yaml --env-kwargs observation_mode:'"both"' -f logs
 ```
 
 - `python -u -m rl_zoo3.train`: Executes the training module from RL Zoo3.
