@@ -20,7 +20,9 @@ Note:
 Ensure that the Dynamixel motor is properly connected to the specified port and that the settings match your hardware configuration.
 One can use Dynamixel Wizzard 2 to configure the firmware of the motors : https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_wizard2/
 
+Example inspired from: https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/sample_code/python_read_write_protocol_2_0/
 """
+
 
 
 import argparse
