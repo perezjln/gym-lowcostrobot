@@ -60,6 +60,16 @@ def do_env_sim():
     env = gym.make("PushCube-v0", observation_mode="state", render_mode="human", action_mode="joint")
     env.reset()
 
+    init_pos = np.zeros(6)
+    for current_id in range(6):
+        dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, current_id + 1, ADDR_MX_PRESENT_POSITION)
+        init_pos[current_id] = dxl_present_position*360/4096
+    print(f"init_pos: {init_pos}")
+
+    env.unwrapped.data.qpos[0:6] = init_pos
+    mujoco.mj_forward(env.unwrapped.model, env.unwrapped.data)
+    env.unwrapped.viewer.sync()
+
     max_step = 1000000
     for _ in range(max_step):
 
@@ -67,10 +77,10 @@ def do_env_sim():
         action = np.zeros(6)
         for current_id in range(6):
             dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, current_id + 1, ADDR_MX_PRESENT_POSITION)
-            action[current_id] = np.uint32(dxl_present_position)
+            action[current_id] = dxl_present_position*360/4096
 
-        print(action)
-        observation, reward, terminated, truncated, info = env.step(action)
+        observation, reward, terminated, truncated, info = env.step(action - init_pos)
+        init_pos = action
 
         # print("Observation:", observation)
         # print("Reward:", reward)
@@ -135,7 +145,7 @@ def do_sim(robot_id="6dof"):
             # Read present position
             for current_id in range(6):
                 dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, current_id + 1, ADDR_MX_PRESENT_POSITION)
-                data.qpos[current_id] = dxl_present_position
+                data.qpos[current_id] = dxl_present_position*360/4096
 
             print(data.qpos)
 
