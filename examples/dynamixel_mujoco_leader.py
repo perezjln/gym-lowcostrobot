@@ -99,6 +99,34 @@ def do_env_sim():
     portHandler.closePort()
 
 
+def real_to_mujoco(real_positions, inverted_joints=[], half_inverted_joints=[]):
+    """
+    Convert joint positions from real robot (in degrees) to Mujoco (in radians),
+    with support for inverted joints.
+    
+    Parameters:
+    real_positions (list or np.array): Joint positions in degrees.
+    inverted_joints (list): List of indices for joints that are inverted.
+    
+    Returns:
+    np.array: Joint positions in radians.
+    """
+    real_positions = np.array(real_positions)
+    mujoco_positions = real_positions * (np.pi / 180.0)
+    
+    # Apply inversion if necessary
+    for index in inverted_joints:
+        mujoco_positions[index] += np.pi
+        mujoco_positions[index] *= -1
+    
+    # Apply half inversion if necessary
+    for index in half_inverted_joints:
+        mujoco_positions[index] -= np.pi / 2.0
+        mujoco_positions[index] *= -1
+
+    return mujoco_positions
+
+
 def do_sim(robot_id="6dof"):
 
     # Control table address
@@ -143,16 +171,16 @@ def do_sim(robot_id="6dof"):
             #    break
 
             # Read present position
+            real_pos = np.zeros(6)
             for current_id in range(6):
                 dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, current_id + 1, ADDR_MX_PRESENT_POSITION)
-                data.qpos[current_id] = dxl_present_position*360/4096
-
-            print(data.qpos)
+                real_pos[current_id] = dxl_present_position*360/4096
 
             # check limits
             # self.check_joint_limits(self.data.qpos)
 
             # compute forward kinematics
+            data.qpos[-6:] = real_to_mujoco(real_pos, inverted_joints=[1, 2, 3, 5], half_inverted_joints=[4])
             mujoco.mj_forward(m, data)
             viewer.sync()
 
@@ -172,5 +200,5 @@ if __name__ == "__main__":
     parser.add_argument('--protocol_version', type=float, default=2.0, help='Protocol version (e.g., 1.0 or 2.0)')    
     args = parser.parse_args()
 
-    #do_sim(args.robot)
-    do_env_sim()
+    do_sim(args.robot)
+    #do_env_sim()
