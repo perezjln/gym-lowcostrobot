@@ -83,7 +83,7 @@ def do_sim(robot_id="6dof"):
         return
 
     m = mujoco.MjModel.from_xml_path(path_scene)
-    m.opt.timestep = 1 / 10000
+    #m.opt.timestep = 1 / 10000
     data = mujoco.MjData(m)
 
     with mujoco.viewer.launch_passive(m, data) as viewer:
