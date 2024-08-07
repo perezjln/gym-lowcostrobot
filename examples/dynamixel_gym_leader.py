@@ -1,8 +1,9 @@
-import os, argparse, time
+import os, argparse
+import numpy as np
 
 import mujoco
-import mujoco.viewer
-import numpy as np
+import gymnasium as gym
+import gym_lowcostrobot  # noqa
 
 
 # Function to get a single character input
@@ -39,7 +40,7 @@ def real_to_mujoco(real_positions, inverted_joints=[], half_inverted_joints=[]):
     """
     real_positions = np.array(real_positions)
     mujoco_positions = real_positions * (np.pi / 180.0)
-    
+
     # Apply inversion if necessary
     for index in inverted_joints:
         mujoco_positions[index] += np.pi
@@ -49,11 +50,20 @@ def real_to_mujoco(real_positions, inverted_joints=[], half_inverted_joints=[]):
     for index in half_inverted_joints:
         mujoco_positions[index] -= np.pi / 2.0
         mujoco_positions[index] *= -1
-
+    
     return mujoco_positions
 
 
-def do_sim(robot_id="6dof"):
+def do_read_pos(packetHandler, portHandler, ADDR_MX_PRESENT_POSITION):
+    # Read present position
+    real_pos = np.zeros(6)
+    for current_id in range(6):
+        dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, current_id + 1, ADDR_MX_PRESENT_POSITION)
+        real_pos[current_id] = dxl_present_position*360/4096
+    return real_to_mujoco(real_pos, inverted_joints=[1, 2, 3, 5], half_inverted_joints=[4])
+
+
+def do_env_sim(args):
 
     # Control table address
     ADDR_MX_PRESENT_POSITION = 132
@@ -77,45 +87,33 @@ def do_sim(robot_id="6dof"):
         getch()
         quit()
 
-    if robot_id == "6dof":
-        path_scene = "gym_lowcostrobot/assets/low_cost_robot_6dof/pick_place_cube.xml"
-    else:
-        return
+    env = gym.make("PickPlaceCube-v0", observation_mode="state", render_mode="human", action_mode="joint")
+    env.reset()
 
-    m = mujoco.MjModel.from_xml_path(path_scene)
-    m.opt.timestep = 1 / 10000
-    data = mujoco.MjData(m)
+    pos_arm = do_read_pos(packetHandler, portHandler, ADDR_MX_PRESENT_POSITION)
+ 
+    # compute forward kinematics
+    env.data.qpos[-6:] = pos_arm
+    mujoco.mj_forward(env.model, env.data)
+    env.viewer.sync()
 
-    with mujoco.viewer.launch_passive(m, data) as viewer:
+    max_step = 1000000
+    for _ in range(max_step):
 
-        ## position object in front of the robot
-        data.joint("cube").qpos[:3] = [0.0, -0.1, 0.01]
-        mujoco.mj_step(m, data)
-        viewer.sync()
+        new_pos_arm = do_read_pos(packetHandler, portHandler, ADDR_MX_PRESENT_POSITION)
+        action = (new_pos_arm - pos_arm)*100
+        observation, reward, terminated, truncated, info = env.step(action)
+        pos_arm = new_pos_arm
 
-        # Run the simulation
-        while viewer.is_running():
-
-            step_start = time.time()
-
-            # Read present position
-            real_pos = np.zeros(6)
-            for current_id in range(6):
-                dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, current_id + 1, ADDR_MX_PRESENT_POSITION)
-                real_pos[current_id] = dxl_present_position*360/4096
-
-            # check limits
-            # self.check_joint_limits(self.data.qpos)
-
-            # compute forward kinematics
-            data.qpos[-6:] = real_to_mujoco(real_pos, inverted_joints=[1, 2, 3, 5], half_inverted_joints=[4])
-            mujoco.mj_step(m, data)
-            viewer.sync()
-
-            # Rudimentary time keeping, will drift relative to wall clock.
-            time_until_next_step = m.opt.timestep - (time.time() - step_start)
-            if time_until_next_step > 0:
-                time.sleep(time_until_next_step)
+        env.render()
+        if terminated:
+            if not truncated:
+                print(f"Cube reached the target position at step: {env.current_step} with reward {reward}")
+            else:
+                print(
+                    f"Cube didn't reached the target position at step: {env.current_step} with reward {reward} but was truncated"
+                )
+            env.reset()
 
     # Close port
     portHandler.closePort()
@@ -123,9 +121,8 @@ def do_sim(robot_id="6dof"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Choose between 5dof and 6dof lowcost robot simulation.")
-    parser.add_argument("--robot", choices=["6dof"], default="6dof", help="Choose the lowcost robot type")
     parser.add_argument('--device', type=str, default='/dev/ttyACM0', help='Port name (e.g., COM1, /dev/ttyUSB0, /dev/tty.usbserial-*)')
     parser.add_argument('--protocol_version', type=float, default=2.0, help='Protocol version (e.g., 1.0 or 2.0)')    
     args = parser.parse_args()
 
-    do_sim(args.robot)
+    do_env_sim(args)
