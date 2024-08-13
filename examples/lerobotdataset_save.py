@@ -28,6 +28,7 @@ import gym_lowcostrobot  # noqa
 def process_args():
     # parse the repo_id name via command line
     parser = argparse.ArgumentParser()
+    parser.add_argument("--env-name", type=str, default="ReachCube-v0")
     parser.add_argument("--num-episodes", type=int, default=2)
     parser.add_argument("--num-frames", type=int, default=20)
     parser.add_argument("--num-workers", type=int, default=8)
@@ -75,8 +76,7 @@ if __name__ == "__main__":
         os.makedirs(videos_dir, exist_ok=True)
 
     # Create the gym environment - check the kwargs in gym_real_world/gym_environment.py
-    gym_handle = "ReachCube-v0"
-    env = gym.make(gym_handle, disable_env_checker=True, observation_mode="both", action_mode="ee")
+    env = gym.make(args.env_name, disable_env_checker=True, observation_mode="both", action_mode="ee")
 
     ep_dicts = []
     episode_data_index = {"from": [], "to": []}
@@ -120,7 +120,7 @@ if __name__ == "__main__":
             ep_dict = {}
 
             # store images in png and create the video
-            for img_key in env.cameras:
+            for img_key in ["image_top", "image_front"]:
                 save_images_concurrently(
                     obs_replay[img_key],
                     images_dir / f"{img_key}_episode_{ep_idx:06d}",
@@ -164,7 +164,7 @@ if __name__ == "__main__":
 
     os.system('spd-say "encode video frames"')
     for ep_idx in range(num_episodes):
-        for img_key in env.cameras:
+        for img_key in ["image_top", "image_front"]:
             encode_video_frames(
                 images_dir / f"{img_key}_episode_{ep_idx:06d}",
                 videos_dir / f"{img_key}_episode_{ep_idx:06d}.mp4",
