@@ -24,6 +24,11 @@ Example inspired from: https://emanual.robotis.com/docs/en/software/dynamixel/dy
 """
 
 
+### Real: All strait position of the motors: 181.58203125 266.572265625 91.93359375 181.318359375 90.0 167.6953125
+### Real: Left position of the motors:       9.033203125 180.0 176.8359375 92.021484375 177.1875 167.6953125
+
+### Mujoco: All strait position of the motors: -0.03142 -1.56422 1.5423 -0.0044892 -0.000443796 0.0523634' (6 last on the qpos)
+### Mujoco: Left position of the motors:       -1.571 -0.0137084 -0.00423796 1.53604 -1.18804e-06 0.052353' (6 last on the qpos)
 
 import argparse
 import os
@@ -80,7 +85,7 @@ def main(args):
             lst_pos = []
             for current_id in range(6):
                 dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, current_id + 1, ADDR_MX_PRESENT_POSITION)
-                lst_pos.append(str(dxl_present_position))
+                lst_pos.append(str(dxl_present_position*360/4096))
 
             print(' '.join(lst_pos))
 
