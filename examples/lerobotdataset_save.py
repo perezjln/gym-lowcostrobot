@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
             state = torch.tensor(
                 np.concatenate(
-                    [np.array(obs_replay["arm_qpos"]), np.array(obs_replay["arm_qvel"]), np.array(obs_replay["object_qpos"])],
+                    [np.array(obs_replay["arm_qpos"]), np.array(obs_replay["arm_qvel"]), np.array(obs_replay["cube_pos"])],
                     axis=1,
                 )
             )
