@@ -25,6 +25,7 @@ from lerobot.scripts.push_dataset_to_hub import push_meta_data_to_hub, push_vide
 from tqdm import tqdm
 
 
+### SimCamera classes
 
 class SimRobotDeviceNotConnectedError(Exception):
     """Exception raised when the robot device is not connected."""
@@ -79,45 +80,14 @@ class SimCamera:
             return self.renderer.render()
 
 
+### SimDynamixelMotorsBus class
+
 class SimDynamixelMotorsBus:
     
     # TODO(rcadene): Add a script to find the motor indices without DynamixelWizzard2
     """
-    The DynamixelMotorsBus class allows to efficiently read and write to the attached motors. It relies on
-    the python dynamixel sdk to communicate with the motors. For more info, see the [Dynamixel SDK Documentation](https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/sample_code/python_read_write_protocol_2_0/#python-read-write-protocol-20).
-
-    A DynamixelMotorsBus instance requires a port (e.g. `DynamixelMotorsBus(port="/dev/tty.usbmodem575E0031751"`)).
-    To find the port, you can run our utility script:
-    ```bash
-    python lerobot/common/robot_devices/motors/dynamixel.py
-    >>> Finding all available ports for the DynamixelMotorsBus.
-    >>> ['/dev/tty.usbmodem575E0032081', '/dev/tty.usbmodem575E0031751']
-    >>> Remove the usb cable from your DynamixelMotorsBus and press Enter when done.
-    >>> The port of this DynamixelMotorsBus is /dev/tty.usbmodem575E0031751.
-    >>> Reconnect the usb cable.
-    ```
-
-    Example of usage for 1 motor connected to the bus:
-    ```python
-    motor_name = "gripper"
-    motor_index = 6
-    motor_model = "xl330-m288"
-
-    motors_bus = DynamixelMotorsBus(
-        port="/dev/tty.usbmodem575E0031751",
-        motors={motor_name: (motor_index, motor_model)},
-    )
-    motors_bus.connect()
-
-    position = motors_bus.read("Present_Position")
-
-    # move from a few motor steps as an example
-    few_steps = 30
-    motors_bus.write("Goal_Position", position + few_steps)
-
-    # when done, consider disconnecting
-    motors_bus.disconnect()
-    ```
+    The DynamixelMotorsBus class allows to efficiently read and write to the simulated Bus managing mujoco environment. 
+    The class is designed to be used with a mujoco environment with the low cost robot 6DoF Robot.
     """
 
     def __init__(
@@ -167,19 +137,6 @@ class SimDynamixelMotorsBus:
         self.calibration = calibration
 
     def apply_calibration(self, values: np.ndarray | list, motor_names: list[str] | None):
-        """Convert from unsigned int32 joint position range [0, 2**32[ to the universal float32 nominal degree range ]-180.0, 180.0[ with
-        a "zero position" at 0 degree.
-
-        Note: We say "nominal degree range" since the motors can take values outside this range. For instance, 190 degrees, if the motor
-        rotate more than a half a turn from the zero position. However, most motors can't rotate more than 180 degrees and will stay in this range.
-
-        Joints values are original in [0, 2**32[ (unsigned int32). Each motor are expected to complete a full rotation
-        when given a goal position that is + or - their resolution. For instance, dynamixel xl330-m077 have a resolution of 4096, and
-        at any position in their original range, let's say the position 56734, they complete a full rotation clockwise by moving to 60830,
-        or anticlockwise by moving to 52638. The position in the original range is arbitrary and might change a lot between each motor.
-        To harmonize between motors of the same model, different robots, or even models of different brands, we propose to work
-        in the centered nominal degree range ]-180, 180[.
-        """
         # Convert from unsigned int32 original range [0, 2**32[ to centered signed int32 range [-2**31, 2**31[
         values = values.astype(np.int32)
         return values
@@ -237,8 +194,9 @@ class SimDynamixelMotorsBus:
         with support for inverted joints.
         
         Parameters:
-        real_positions (list or np.array): Joint positions in degrees.
-        inverted_joints (list): List of indices for joints that are inverted.
+        real_positions (np.array): Joint positions in degrees.
+        transforms (list): List of transforms to apply to each joint.
+        oppose (list): List of oppositions to apply to each joint.
         
         Returns:
         np.array: Joint positions in radians.
@@ -486,7 +444,9 @@ if __name__ == "__main__":
 
             timestamps.append(time.time() - start_time)
 
+        ## Tolerance workaround ...
         num_frames = len(timestamps)
+        timestamps = np.linspace(0, timestamps[-1], num_frames)
 
         # os.system('spd-say "stop"')
         if not drop_episode:
@@ -564,7 +524,8 @@ if __name__ == "__main__":
     hf_dataset.set_transform(hf_transform_to_torch)
 
     info = {
-        "fps": sum(ep_fps) / len(ep_fps),  # to have a good tolerance in data processing for the slowest video
+        #"fps": sum(ep_fps) / len(ep_fps),  # to have a good tolerance in data processing for the slowest video
+        "fps": 24,  # to have a good tolerance in data processing for the slowest video
         "video": 1,
     }
     
@@ -579,18 +540,22 @@ if __name__ == "__main__":
 
     #os.system('spd-say "compute stats"')
     stats = compute_stats(lerobot_dataset, num_workers=args.num_workers)
-
+    save_meta_data(info, stats, episode_data_index, meta_data_dir)
+    
     #os.system('spd-say "save to disk"')
     hf_dataset = hf_dataset.with_format(None)  # to remove transforms that cant be saved
     hf_dataset.save_to_disk(str(out_data / "train"))
 
     args.push_to_hub = True
     if args.push_to_hub:
-        hf_dataset.push_to_hub(repo_id, token=True, revision="main")
-        hf_dataset.push_to_hub(repo_id, token=True, revision=revision)
 
-        push_meta_data_to_hub(repo_id, meta_data_dir, revision="main")
-        push_meta_data_to_hub(repo_id, meta_data_dir, revision=revision)
+        repo_name = f"{repo_id}/lowcostrobot-mujoco-pickplace"
 
-        push_videos_to_hub(repo_id, videos_dir, revision="main")
-        push_videos_to_hub(repo_id, videos_dir, revision=revision)
+        hf_dataset.push_to_hub(repo_name, token=True, revision="main")
+        hf_dataset.push_to_hub(repo_name, token=True, revision=revision)
+
+        push_meta_data_to_hub(repo_name, meta_data_dir, revision="main")
+        push_meta_data_to_hub(repo_name, meta_data_dir, revision=revision)
+
+        push_videos_to_hub(repo_name, videos_dir, revision="main")
+        push_videos_to_hub(repo_name, videos_dir, revision=revision)
