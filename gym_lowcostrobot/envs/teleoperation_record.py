@@ -286,23 +286,30 @@ def test_read_leader_position():
     leader.disconnect()
 
 current_motor_ids=1
-stop = False
+stop_episode = False
+stop_record  = False
 
 def key_callback(keycode):
 
     global current_motor_ids
-    global stop
+    global stop_episode
+    global stop_record
 
-    print(f"Key pressed: {chr(keycode)}")
-    #print(follower.data.qpos)
+    print(f"Key pressed: [{chr(keycode)}]")
 
+    ## stop the episode
+    if chr(keycode) == "7":
+        stop_episode = True
+
+    if chr(keycode) == " ":
+        stop_record = True
+
+    ## change the motor id to control
     if chr(keycode) in ["1", "2", "3", "4", "5", "6"]:
         current_motor_ids = int(chr(keycode))
         print(f"Current motor id: {current_motor_ids}")
 
-    if chr(keycode) == "7":
-        stop = True
-
+    ## increase the motor position
     if chr(keycode) == "8":
         idx_motor = current_motor_ids-6-1
         follower.data.qpos[idx_motor] += 0.1
@@ -310,6 +317,7 @@ def key_callback(keycode):
                 follower.data)
         viewer.sync()
 
+    ## decrease the motor position
     if chr(keycode) == "9":
         idx_motor = current_motor_ids-6-1
         follower.data.qpos[idx_motor] -= 0.1
@@ -317,6 +325,14 @@ def key_callback(keycode):
                 follower.data)
         viewer.sync()
 
+
+def mujoco_replace_cube(model, data):
+    cube_low = np.array([-0.15, 0.10, 0.015])
+    cube_high = np.array([0.15, 0.25, 0.015])
+    cube_pos = np.random.uniform(cube_low, cube_high)
+    cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
+    data.qpos[0:7] = np.concatenate([cube_pos, cube_rot])
+    mujoco.mj_forward(model, data)
 
 if __name__ == "__main__":
 
@@ -405,25 +421,15 @@ if __name__ == "__main__":
     if not os.path.exists(videos_dir):
         os.makedirs(videos_dir, exist_ok=True)
 
+
     ep_dicts = []
     episode_data_index = {"from": [], "to": []}
     ep_fps = []
     id_from = 0
     id_to = 0
 
-    obs_replay = {}
-    obs_replay["observation"] = []
-    obs_replay["action"] = []
-    obs_replay["image_top"] = []
-    obs_replay["image_front"] = []
-
-    timestamps = []
-    start_time = time.time()
-    drop_episode = False
-
     ### start the teleoperation
     ep_idx = 0
-    do_record_images = True
     with mujoco.viewer.launch_passive(follower.model, follower.data, key_callback=key_callback) as viewer:    
 
         robot = KochRobot(leader_arms   = {"main": leader},
@@ -432,39 +438,50 @@ if __name__ == "__main__":
                           calibration_path=args.calibration_path)
         robot.connect()
         
-        while stop == False:
+        while stop_record == False:
 
-            obs_dict, action_dict = robot.teleop_step(record_data=True)
-            obs_replay["observation"].append(copy.deepcopy(obs_dict["observation.state"]))
-            obs_replay["action"].append(copy.deepcopy(action_dict["action"]))
+            # sample the initial position of the cube
+            mujoco_replace_cube(follower.model, follower.data)
 
-            if do_record_images:
+            obs_replay = {}
+            obs_replay["observation"] = []
+            obs_replay["action"] = []
+            obs_replay["image_top"] = []
+            obs_replay["image_front"] = []
+
+            timestamps = []
+            start_time = time.time()
+
+            print(f"Start episode {ep_idx} ...")
+            while stop_episode == False and stop_record == False:
+
+                obs_dict, action_dict = robot.teleop_step(record_data=True)
+                obs_replay["observation"].append(copy.deepcopy(obs_dict["observation.state"]))
+                obs_replay["action"].append(copy.deepcopy(action_dict["action"]))
                 obs_replay["image_top"].append(copy.deepcopy(obs_dict["observation.images.image_top"].numpy()))
                 obs_replay["image_front"].append(copy.deepcopy(obs_dict["observation.images.image_front"].numpy()))
+                timestamps.append(time.time() - start_time)
 
-            timestamps.append(time.time() - start_time)
+            stop_episode = False
 
-        ## Tolerance workaround ...
-        num_frames = len(timestamps)
-        timestamps = np.linspace(0, timestamps[-1], num_frames)
+            ## Tolerance workaround ...
+            num_frames = len(timestamps)
+            timestamps = np.linspace(0, timestamps[-1], num_frames)
 
-        # os.system('spd-say "stop"')
-        if not drop_episode:
             # os.system(f'spd-say "saving episode"')
             ep_dict = {}
 
             # store images in png and create the video
-            if do_record_images:
-                for img_key in ["image_top", "image_front"]:
-                    save_images_concurrently(
-                        obs_replay[img_key],
-                        images_dir / f"{img_key}_episode_{ep_idx:06d}",
-                        args.num_workers,
-                    )
-                    fname = f"{img_key}_episode_{ep_idx:06d}.mp4"
+            for img_key in ["image_top", "image_front"]:
+                save_images_concurrently(
+                    obs_replay[img_key],
+                    images_dir / f"{img_key}_episode_{ep_idx:06d}",
+                    args.num_workers,
+                )
+                fname = f"{img_key}_episode_{ep_idx:06d}.mp4"
 
-                    # store the reference to the video frame
-                    ep_dict[f"observation.{img_key}"] = [{"path": f"videos/{fname}", "timestamp": tstp} for tstp in timestamps]
+                # store the reference to the video frame
+                ep_dict[f"observation.{img_key}"] = [{"path": f"videos/{fname}", "timestamp": tstp} for tstp in timestamps]
 
             state     = torch.tensor(np.array(obs_replay["observation"]))
             action    = torch.tensor(np.array(obs_replay["action"]))
@@ -473,12 +490,10 @@ if __name__ == "__main__":
 
             ep_dict["observation.state"] = state
             ep_dict["action"] = action
-
             ep_dict["episode_index"] = torch.tensor([ep_idx] * num_frames, dtype=torch.int64)
             ep_dict["frame_index"]   = torch.arange(0, num_frames, 1)
             ep_dict["timestamp"]     = torch.tensor(timestamps)
             ep_dict["next.done"]     = next_done
-            ep_dicts.append(ep_dict)
             ep_fps.append(num_frames / timestamps[-1])
             print(f"Episode {ep_idx} done, fps: {ep_fps[-1]:.2f}")
 
@@ -488,29 +503,31 @@ if __name__ == "__main__":
             id_to = id_from + num_frames if args.keep_last else id_from + num_frames - 1
             id_from = id_to
 
+            ep_dicts.append(ep_dict)
             ep_idx += 1
 
-    if do_record_images:
-        # os.system('spd-say "encode video frames"')
-        for ep_idx in range(num_episodes):
-            for img_key in ["image_top", "image_front"]:
-                encode_video_frames(
-                    images_dir / f"{img_key}_episode_{ep_idx:06d}",
-                    videos_dir / f"{img_key}_episode_{ep_idx:06d}.mp4",
-                    ep_fps[ep_idx],
-                )
+    ### end the teleoperation
+    robot.disconnect()
+
+    # os.system('spd-say "encode video frames"')
+    for idx in range(ep_idx):
+        for img_key in ["image_top", "image_front"]:
+            encode_video_frames(
+                images_dir / f"{img_key}_episode_{idx:06d}",
+                videos_dir / f"{img_key}_episode_{idx:06d}.mp4",
+                ep_fps[idx],
+            )
 
     #os.system('spd-say "concatenate episodes"')
     data_dict = concatenate_episodes(ep_dicts)  # Since our fps varies we are sometimes off tolerance for the last frame
 
     features = {}
 
-    if do_record_images:
-        keys = [key for key in data_dict if "observation.image_" in key]
-        for key in keys:
-            features[key.replace("observation.image_", "observation.images.")] = VideoFrame()
-            data_dict[key.replace("observation.image_", "observation.images.")] = data_dict[key]
-            del data_dict[key]
+    keys = [key for key in data_dict if "observation.image_" in key]
+    for key in keys:
+        features[key.replace("observation.image_", "observation.images.")] = VideoFrame()
+        data_dict[key.replace("observation.image_", "observation.images.")] = data_dict[key]
+        del data_dict[key]
 
     features["observation.state"] = Sequence(length=data_dict["observation.state"].shape[1], feature=Value(dtype="float32", id=None))
     features["action"] = Sequence(length=data_dict["action"].shape[1], feature=Value(dtype="float32", id=None))
@@ -526,7 +543,7 @@ if __name__ == "__main__":
     info = {
         #"fps": sum(ep_fps) / len(ep_fps),  # to have a good tolerance in data processing for the slowest video
         "fps": 24,  # to have a good tolerance in data processing for the slowest video
-        "video": 1,
+        "video": ep_idx,
     }
     
     #os.system('spd-say "from preloaded"')
