@@ -1,10 +1,15 @@
 
-import time
+import argparse
 import numpy as np
 
 import mujoco
 import mujoco.viewer
 
+from lerobot.common.robot_devices.motors.dynamixel import DynamixelMotorsBus
+from lerobot.common.robot_devices.robots.koch import KochRobot
+
+
+## Define the simulated robot
 
 class SimRobotDeviceNotConnectedError(Exception):
     """Exception raised when the robot device is not connected."""
@@ -29,43 +34,9 @@ class SimRobotDeviceAlreadyConnectedError(Exception):
 
 class SimDynamixelMotorsBus:
     
-    # TODO(rcadene): Add a script to find the motor indices without DynamixelWizzard2
     """
-    The DynamixelMotorsBus class allows to efficiently read and write to the attached motors. It relies on
-    the python dynamixel sdk to communicate with the motors. For more info, see the [Dynamixel SDK Documentation](https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_sdk/sample_code/python_read_write_protocol_2_0/#python-read-write-protocol-20).
-
-    A DynamixelMotorsBus instance requires a port (e.g. `DynamixelMotorsBus(port="/dev/tty.usbmodem575E0031751"`)).
-    To find the port, you can run our utility script:
-    ```bash
-    python lerobot/common/robot_devices/motors/dynamixel.py
-    >>> Finding all available ports for the DynamixelMotorsBus.
-    >>> ['/dev/tty.usbmodem575E0032081', '/dev/tty.usbmodem575E0031751']
-    >>> Remove the usb cable from your DynamixelMotorsBus and press Enter when done.
-    >>> The port of this DynamixelMotorsBus is /dev/tty.usbmodem575E0031751.
-    >>> Reconnect the usb cable.
-    ```
-
-    Example of usage for 1 motor connected to the bus:
-    ```python
-    motor_name = "gripper"
-    motor_index = 6
-    motor_model = "xl330-m288"
-
-    motors_bus = DynamixelMotorsBus(
-        port="/dev/tty.usbmodem575E0031751",
-        motors={motor_name: (motor_index, motor_model)},
-    )
-    motors_bus.connect()
-
-    position = motors_bus.read("Present_Position")
-
-    # move from a few motor steps as an example
-    few_steps = 30
-    motors_bus.write("Goal_Position", position + few_steps)
-
-    # when done, consider disconnecting
-    motors_bus.disconnect()
-    ```
+    The SimDynamixelMotorsBus class allows to efficiently read and write to the attached motors simulated in mujoco scene. 
+    
     """
 
     def __init__(
@@ -115,19 +86,6 @@ class SimDynamixelMotorsBus:
         self.calibration = calibration
 
     def apply_calibration(self, values: np.ndarray | list, motor_names: list[str] | None):
-        """Convert from unsigned int32 joint position range [0, 2**32[ to the universal float32 nominal degree range ]-180.0, 180.0[ with
-        a "zero position" at 0 degree.
-
-        Note: We say "nominal degree range" since the motors can take values outside this range. For instance, 190 degrees, if the motor
-        rotate more than a half a turn from the zero position. However, most motors can't rotate more than 180 degrees and will stay in this range.
-
-        Joints values are original in [0, 2**32[ (unsigned int32). Each motor are expected to complete a full rotation
-        when given a goal position that is + or - their resolution. For instance, dynamixel xl330-m077 have a resolution of 4096, and
-        at any position in their original range, let's say the position 56734, they complete a full rotation clockwise by moving to 60830,
-        or anticlockwise by moving to 52638. The position in the original range is arbitrary and might change a lot between each motor.
-        To harmonize between motors of the same model, different robots, or even models of different brands, we propose to work
-        in the centered nominal degree range ]-180, 180[.
-        """
         # Convert from unsigned int32 original range [0, 2**32[ to centered signed int32 range [-2**31, 2**31[
         values = values.astype(np.int32)
         return values
@@ -179,17 +137,14 @@ class SimDynamixelMotorsBus:
             self.data.qpos[idx-6-1] = value
 
     @staticmethod
-    def real_to_mujoco(real_positions, transforms, oppose, inverted_joints=[], half_inverted_joints=[], oppose_joint=[], positive_half_inverted_joints=[]):
+    def real_to_mujoco(real_positions, transforms, oppose):
         """
-        Convert joint positions from real robot (in degrees) to Mujoco (in radians),
-        with support for inverted joints.
-        
+        Convert real positions to mujoco positions
+
         Parameters:
-        real_positions (list or np.array): Joint positions in degrees.
-        inverted_joints (list): List of indices for joints that are inverted.
-        
-        Returns:
-        np.array: Joint positions in radians.
+        - real_positions: list of joint positions in degrees
+        - transforms: list of joint transforms in radians
+        - oppose: list of joint oppositions (1 or -1)
         """
         real_positions = np.array(real_positions)
         mujoco_positions = real_positions * (np.pi / 180.0)
@@ -197,28 +152,6 @@ class SimDynamixelMotorsBus:
         for id in range(6):
             mujoco_positions[id] = transforms[id] + mujoco_positions[id]
             mujoco_positions[id] *= oppose[id]
-
-
-        """
-        # Apply inversion if necessary
-        for index in inverted_joints:
-            mujoco_positions[index] += np.pi + np.pi / 2.0
-            mujoco_positions[index] *= -1
-        
-        # Apply half inversion if necessary
-        for index in half_inverted_joints:
-            mujoco_positions[index] -= np.pi / 2.0
-            #mujoco_positions[index] *= -1
-
-        # Apply half inversion if necessary
-        for index in positive_half_inverted_joints:
-            mujoco_positions[index] = np.pi / 2.0
-            #mujoco_positions[index] *= -1
-
-        # Apply half inversion if necessary
-        for index in oppose_joint:
-            mujoco_positions[index] *= -1
-        """
 
         return mujoco_positions
 
@@ -262,49 +195,10 @@ class SimDynamixelMotorsBus:
 
 
 
-import argparse
-from lerobot.common.robot_devices.motors.dynamixel import DynamixelMotorsBus
-from lerobot.common.robot_devices.robots.koch import KochRobot
-
-def busy_wait(seconds):
-    # Significantly more accurate than `time.sleep`, and mendatory for our use case,
-    # but it consumes CPU cycles.
-    # TODO(rcadene): find an alternative: from python 11, time.sleep is precise
-    end_time = time.perf_counter() + seconds
-    while time.perf_counter() < end_time:
-        pass
-
-def test_teleoperate(robot: KochRobot, fps: int | None = None, teleop_time_s: float | None = None):
-
-    if not robot.is_connected:
-        robot.connect()
-
-    with mujoco.viewer.launch_passive(robot.follower_arms["main"].model, robot.follower_arms["main"].data) as viewer:
-
-        ## position object in front of the robot
-        robot.follower_arms["main"].data.joint("cube").qpos[:3] = [0.0, -0.1, 0.01]
-        mujoco.mj_step(robot.follower_arms["main"].model, 
-                       robot.follower_arms["main"].data)
-        viewer.sync()
-
-        start_teleop_t = time.perf_counter()
-
-        # Run the simulation
-        while viewer.is_running():
-
-            start_loop_t = time.perf_counter()
-            robot.teleop_step()
-
-            if fps is not None:
-                dt_s = time.perf_counter() - start_loop_t
-                busy_wait(1 / fps - dt_s)
-
-            dt_s = time.perf_counter() - start_loop_t
-
-            if teleop_time_s is not None and time.perf_counter() - start_teleop_t > teleop_time_s:
-                break
-
+## test the leader motors reading
 def test_read_leader_position():
+
+    # Define the leader motors
     leader = DynamixelMotorsBus(
                 port="/dev/ttyACM0",
                 motors={
@@ -317,23 +211,29 @@ def test_read_leader_position():
                     "gripper": (6, "xl330-m077"),
                 },
             )
-
+    
+    # connect the leader motors
     leader.connect()
+
+    # read the motors position
     while True:
         print(leader.read("Present_Position", 
-                          ["shoulder_pan", "shoulder_lift", "elbow_flex", 
-                           "wrist_flex", "wrist_roll", "gripper"]))
+                          ["shoulder_pan", "shoulder_lift", 
+                           "elbow_flex", "wrist_flex", 
+                           "wrist_roll", "gripper"]))
 
+    # disconnect the leader motors
     leader.disconnect()
 
 
+## Mujoco keyboard callback
+# [1-6] to select the current controlled motor using the keyboard
+# [8] to increase the current motor position
+# [9] to decrease the current motor position
 
 current_motor_ids=1
 def key_callback(keycode):
     global current_motor_ids
-
-    #print(f"Key pressed: {chr(keycode)}")
-    #print(follower.data.qpos)
 
     if chr(keycode) in ["1", "2", "3", "4", "5", "6"]:
         current_motor_ids = int(chr(keycode))
@@ -356,6 +256,8 @@ def key_callback(keycode):
 
 if __name__ == "__main__":
 
+    PATH_SCENE = "gym_lowcostrobot/assets/low_cost_robot_6dof/pick_place_cube.xml"
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--leader-port", type=str, default="/dev/ttyACM0", help="Port for the leader motors")
     parser.add_argument("--calibration-path", type=str, default=".cache/calibration/koch.pkl", help="Path to the robots calibration file")  
@@ -367,7 +269,7 @@ if __name__ == "__main__":
         test_read_leader_position()
         exit()
 
-    ## test the teleoperation
+    ## Instantiate the leader arm
     leader = DynamixelMotorsBus(
                 port=args.leader_port,
                 motors={
@@ -381,8 +283,9 @@ if __name__ == "__main__":
                 },
             )
 
+    ## Instantiate the follower arm which is simulated
     follower = SimDynamixelMotorsBus(
-                path_scene="gym_lowcostrobot/assets/low_cost_robot_6dof/pick_place_cube.xml",
+                path_scene=PATH_SCENE,
                 motors={
                     # name: (index, model)
                     "shoulder_pan": (1, "xl430-w250"),
@@ -394,14 +297,19 @@ if __name__ == "__main__":
                 },
             )
 
-    #with mujoco.viewer.launch(follower.model, follower.data) as viewer:
+    # Start the mujoco viewer
     with mujoco.viewer.launch_passive(follower.model, follower.data, key_callback=key_callback) as viewer:    
 
-        robot = KochRobot(leader_arms={"main": leader}, 
-                        follower_arms={"main": follower},
-                        calibration_path=args.calibration_path)
+        # Define the robot as usual, with the leader and follower arms
+        # One need to put the robot instantiation inside the mujoco viewer context
+        # becasue the viewer is needed for the calibration that occurs in the robot instantiation
+        robot = KochRobot(leader_arms={"main": leader},
+                            follower_arms={"main": follower},
+                            calibration_path=args.calibration_path)
 
+        # Connect the robot
         robot.connect()
-        
+
+        # Test the teleoperation
         while True:
             robot.teleop_step()
