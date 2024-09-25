@@ -117,7 +117,7 @@ class ReachCubeEnv(Env):
         self,
         ee_target_pos,
         step=0.2,
-        joint_name="moving_side",
+        joint_name="link_6",
         nb_dof=6,
         regularization=1e-6,
         home_position=None,
@@ -190,7 +190,7 @@ class ReachCubeEnv(Env):
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action
-            ee_id = self.model.body("moving_side").id
+            ee_id = self.model.body("link_6").id
             ee_target_pos = self.data.xpos[ee_id] + ee_action
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement

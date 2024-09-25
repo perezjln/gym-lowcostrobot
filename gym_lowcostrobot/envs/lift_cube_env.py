@@ -113,7 +113,7 @@ class LiftCubeEnv(Env):
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6):
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="link_6", nb_dof=6, regularization=1e-6):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
@@ -175,7 +175,7 @@ class LiftCubeEnv(Env):
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action
-            ee_id = self.model.body("moving_side").id
+            ee_id = self.model.body("link_6").id
             ee_target_pos = self.data.xpos[ee_id] + ee_action
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
@@ -237,7 +237,7 @@ class LiftCubeEnv(Env):
         # Get the position of the cube and the distance between the end effector and the cube
         cube_pos = self.data.qpos[:3]
         cube_z = cube_pos[2]
-        ee_id = self.model.body("moving_side").id
+        ee_id = self.model.body("link_6").id
         ee_pos = self.data.geom_xpos[ee_id]
         ee_to_cube = np.linalg.norm(ee_pos - cube_pos)
 
