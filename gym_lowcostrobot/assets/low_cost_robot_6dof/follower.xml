@@ -1,0 +1,120 @@
+<mujoco model="follower">
+  <compiler angle="radian" meshdir="./follower_meshes/"/>
+  <option integrator="implicitfast" cone="elliptic" impratio="100" timestep="0.001"/>
+
+  <default>
+    <default class="follower">
+      <joint armature="0.1" damping="1" actuatorfrcrange="-10 10"/>
+      <position kp="1000" kv="100" inheritrange="1"/>
+      <default class="visual">
+        <geom type="mesh" group="2" contype="0" conaffinity="0"/>
+      </default>
+      <default class="collision">
+        <geom type="mesh" group="3" mass="0" density="0"/>
+        <default class="finger">
+          <geom type="mesh" priority="1" condim="6" solimp="0.015 1 0.036" friction="0.8 0.02 0.01"/>
+        </default>
+      </default>
+      <site size="0.001" rgba="0.5 0.5 0.5 0.3" group="4"/>
+    </default>
+  </default>
+
+  <asset>
+    <material name="black" rgba="0.1 0.1 0.1 1"/>
+    <material name="white" rgba="0.8 0.8 0.8 1"/>
+
+    <mesh name="base_link" file="base_link.STL"/>
+    <mesh name="link_1" file="link_1.STL"/>
+    <mesh name="link_2" file="link_2.STL"/>
+    <mesh name="link_3" file="link_3.STL"/>
+    <mesh name="link_4" file="link_4.STL"/>
+    <mesh name="link_5" file="link_5.STL"/>
+    <mesh name="link_6" file="link_6.STL"/>
+
+    <mesh name="base_link_motor" file="base_link_motor.STL"/>
+    <mesh name="link_1_motor" file="link_1_motor.STL"/>
+    <mesh name="link_2_motor" file="link_2_motor.STL"/>
+    <mesh name="link_3_motor" file="link_3_motor.STL"/>
+    <mesh name="link_4_motor" file="link_4_motor.STL"/>
+    <mesh name="link_5_motor" file="link_5_motor.STL"/>
+
+    <mesh name="base_link_collision" file="base_link_collision.stl"/>
+    <mesh name="link_1_collision" file="link_1_collision.stl"/>
+    <mesh name="link_2_collision" file="link_2_collision.stl"/>
+    <mesh name="link_3_collision" file="link_3_collision.stl"/>
+    <mesh name="link_4_collision" file="link_4_collision.stl"/>
+    <mesh name="link_5_collision" file="link_5_collision.stl"/>
+    <mesh name="link_6_collision" file="link_6_collision.stl"/>
+  </asset>
+
+  <worldbody>
+    <body name="base_link" childclass="follower">
+      <geom mesh="base_link" class="visual" material="white"/>
+      <geom mesh="base_link_motor" class="visual" material="black"/>
+      <geom mesh="base_link_collision" class="collision"/>
+      
+      <body name="link_1" pos="0.012 0 0.0409">
+        <inertial pos="0.011924 -0.00048792 0.013381" quat="-0.0190903 0.705417 0.0178052 0.708312" mass="0.05014" diaginertia="1.44921e-05 1.2371e-05 7.59138e-06"/>
+        <joint name="joint_1" pos="0 0 0" axis="0 0 -1" range="-3.14 3.14"/>
+        <geom mesh="link_1" class="visual" material="white"/>
+        <geom mesh="link_1_motor" class="visual" material="black"/>
+        <geom mesh="link_1_collision" class="collision"/>
+
+        <body name="link_2" pos="0 -0.0209 0.0154">
+          <inertial pos="0.0011747 0.02097 0.071547" quat="0.998768 2.01447e-05 0.0496266 0.000367169" mass="0.050177" diaginertia="3.73065e-05 3.3772e-05 7.94901e-06"/>
+          <joint name="joint_2" pos="0 0 0" axis="0 1 0" range="-3.14 3.14"/>
+          <geom mesh="link_2" class="visual" material="white"/>
+          <geom mesh="link_2_motor" class="visual" material="black"/>
+          <geom mesh="link_2_collision" class="collision"/>
+          
+          <body name="link_3" pos="-0.0148 0.0065 0.1083">
+            <inertial pos="-0.05537 0.014505 0.0028659" quat="8.17663e-05 0.710999 -4.16983e-05 0.703193" mass="0.06379" diaginertia="2.45081e-05 2.2231e-05 7.34061e-06"/>
+            <joint name="joint_3" pos="0 0 0" axis="0 1 0" range="-3.14 3.14"/>
+            <geom mesh="link_3" class="visual" material="white"/>
+            <geom mesh="link_3_motor" class="visual" material="black"/>
+            <geom mesh="link_3_collision" class="collision"/>
+
+            <body name="link_4" pos="-0.10048 5e-05 0.0026999">
+              <inertial pos="-0.02652 0.019195 -9.0614e-06" quat="0.707361 0.706812 0.00580344 0.00484124" mass="0.019805" diaginertia="2.95813e-06 2.8759e-06 1.07787e-06"/>
+              <joint name="joint_4" pos="0 0 0" axis="0 1 0" range="-3.14 3.14"/>
+              <geom mesh="link_4" class="visual" material="white"/>
+              <geom mesh="link_4_motor" class="visual" material="black"/>
+              <geom mesh="link_4_collision" class="collision"/>
+
+              <body name="link_5" pos="-0.045 0.013097 0">
+                <inertial pos="-0.019091 0.0053379 0.00018011" quat="0.105295 0.703509 -0.0986543 0.695885" mass="0.029277" diaginertia="8.11303e-06 7.14908e-06 3.27429e-06"/>
+                <joint name="joint_5" pos="0 0 0" axis="1 0 0" range="-3.14 3.14"/>
+                <geom mesh="link_5" class="visual" material="white"/>
+                <geom mesh="link_5_motor" class="visual" material="black"/>
+                <geom mesh="link_5_collision" class="finger"/>
+      
+                <body name="link_6" pos="-0.01315 -0.0075 0.0145">
+                  <inertial pos="-0.02507 0.0010817 -0.01414" quat="0.528148 0.5474 0.466496 0.451436" mass="0.012831" diaginertia="3.49922e-06 2.45768e-06 1.4645e-06"/>
+                  <joint name="joint_6" pos="0 0 0" axis="0 0 -1" range="-2.45 0.032"/>
+                  <geom mesh="link_6" class="visual" material="white"/>
+                  <geom mesh="link_6_collision" class="finger"/>
+                </body>
+
+                <site name="end_effector" pos="-0.06429 0.00327 0.0011"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <contact>
+    <exclude name="exclude_base_link_link_1" body1="base_link" body2="link_1"/>
+  </contact>
+
+  <actuator>
+    <position class="follower" name="joint_1" joint="joint_1"/>
+    <position class="follower" name="joint_2" joint="joint_2"/>
+    <position class="follower" name="joint_3" joint="joint_3"/>
+    <position class="follower" name="joint_4" joint="joint_4"/>
+    <position class="follower" name="joint_5" joint="joint_5"/>
+    <position class="follower" name="joint_6" joint="joint_6"/>
+  </actuator>
+
+</mujoco>
