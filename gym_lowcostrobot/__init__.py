@@ -35,3 +35,9 @@ register(
     entry_point="gym_lowcostrobot.envs:StackTwoCubesEnv",
     max_episode_steps=500,
 )
+
+register(
+    id="PushCubeLoop-v0",
+    entry_point="gym_lowcostrobot.envs:PushCubeLoopEnv",
+    max_episode_steps=500,
+)
