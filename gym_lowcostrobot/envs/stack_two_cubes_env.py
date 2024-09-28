@@ -115,7 +115,7 @@ class StackTwoCubesEnv(Env):
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="moving_side", nb_dof=6, regularization=1e-6):
+    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="link_6", nb_dof=6, regularization=1e-6):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
@@ -177,7 +177,7 @@ class StackTwoCubesEnv(Env):
             ee_action, gripper_action = action[:3], action[-1]
 
             # Update the robot position based on the action
-            ee_id = self.model.body("moving_side").id
+            ee_id = self.model.body("link_6").id
             ee_target_pos = self.data.xpos[ee_id] + ee_action
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
