@@ -14,6 +14,7 @@ class PushCubeLoopEnv(Env):
     ## Description
 
     The robot has to push a cube with its end-effector between two goal positions.
+    Once the cube reaches the goal position, the goal region is switched to the other side.
 
     ## Action space
 
@@ -45,7 +46,6 @@ class PushCubeLoopEnv(Env):
 
     - `"arm_qpos"`: the joint angles of the robot arm in radians, shape (6,)
     - `"arm_qvel"`: the joint velocities of the robot arm in radians per second, shape (6,)
-    - `"target_pos"`: the position of the target, as (x, y, z)
     - `"image_front"`: the front image of the camera of size (240, 320, 3)
     - `"image_top"`: the top image of the camera of size (240, 320, 3)
     - `"cube_pos"`: the position of the cube, as (x, y, z)
@@ -56,7 +56,6 @@ class PushCubeLoopEnv(Env):
     | --------------- | --------- | --------- | -------- |
     | `"arm_qpos"`    | ✓         | ✓         | ✓        |
     | `"arm_qvel"`    | ✓         | ✓         | ✓        |
-    | `"target_pos"`  | ✓         | ✓         | ✓        |
     | `"image_front"` | ✓         |           | ✓        |
     | `"image_top"`   | ✓         |           | ✓        |
     | `"cube_pos"`    |           | ✓         | ✓        |
@@ -115,6 +114,8 @@ class PushCubeLoopEnv(Env):
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
         self.cube_q_id = self.model.body("cube").id
+        self.cube_size = 0.015
+        self.cube_position = np.array([0.0,0.0,0.0])
 
         goal_region_1_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, "goal_region_1")
         goal_region_2_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, "goal_region_2")
@@ -126,7 +127,9 @@ class PushCubeLoopEnv(Env):
         self.goal_region_high[:2] -= 0.005 # offset sampling region to keep cube within
         self.goal_region_low = self.goal_region_high * np.array([-1., -1., 1.])
         self.current_goal = 0 # 0 for first goal region , and 1 for second goal region
+        self.control_decimation = 4 # number of simulation steps per control step
 
+        self._step = 0
         # indicators for the reward
 
 
@@ -201,7 +204,7 @@ class PushCubeLoopEnv(Env):
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-            target_qpos = action * (target_high - target_low) / 2 + (target_high + target_low) / 2
+            target_qpos = np.array(action).clip(target_low, target_high)
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
@@ -209,9 +212,10 @@ class PushCubeLoopEnv(Env):
         self.data.ctrl = target_qpos
 
         # Step the simulation forward
-        mujoco.mj_step(self.model, self.data)
-        if self.render_mode == "human":
-            self.viewer.sync()
+        for _ in range(self.control_decimation):
+            mujoco.mj_step(self.model, self.data)
+            if self.render_mode == "human":
+                self.viewer.sync()
 
     def get_observation(self):
         # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, q6, gripper]
@@ -241,14 +245,11 @@ class PushCubeLoopEnv(Env):
         cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.data.qpos[:] = np.concatenate([robot_qpos, cube_pos, cube_rot])
-
-        #goal_right_geom_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_SITE, "goal_right")
-        #self.model.site_pos[goal_right_geom_id] = self.goal_right
         
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
 
-        return self.get_observation(), {}
+        return self.get_observation(), {'timestamp': 0.0}
 
     def step(self, action):
         # Perform the action and step the simulation
@@ -257,13 +258,11 @@ class PushCubeLoopEnv(Env):
         # Get the new observation
         observation = self.get_observation()
 
-        # Get the position of the cube and the distance between the end effector and the cube
-        cube_pos_xy = self.data.qpos[self.cube_q_id:self.cube_q_id+2]
-        #cube_to_target = np.linalg.norm(cube_pos - self.target_pos)
+        reward, success = self.get_reward()
+        self._step += 1
+        info = {'timestamp': self.data.time, 'success': success}#self.model.opt.timestep * self._step}
 
-        # Compute the reward
-        reward = 0# -cube_to_target
-        return observation, reward, False, False, {}
+        return observation, reward, False, False, info
 
     def render(self):
         if self.render_mode == "human":
@@ -280,10 +279,36 @@ class PushCubeLoopEnv(Env):
         if self.render_mode == "rgb_array":
             self.rgb_array_renderer.close()
 
-    def _get_cube_overlap(self):
+    def get_reward(self):
+        # Get the position of the cube and the distance between the end effector and the cube
+        self.cube_position = self.data.qpos[self.cube_q_id-3:self.cube_q_id]
+        overlap = self.get_cube_overlap()
+        # if the intersection is above 95% consider the episode a success and switch goals:
+        success = 0
+        if overlap > 0.95:
+            success = 1
+            reward = +5
+            self.current_goal = 1 - self.current_goal
+
+        elif overlap > 0.0:
+            reward = overlap - 1
+
+        elif overlap == 0.0:
+            # calculate distance to edge on y axis only
+            goal_region_edge = self.goal_region_low[1] \
+                               + (1 - self.current_goal) * self.goal_region_1_center[1] \
+                               + self.current_goal * self.goal_region_2_center[1]
+            
+            distance_to_edge = np.sqrt((self.cube_position[1] - goal_region_edge)**2)
+            # max distance to edge within the box is 0.16
+            reward = min(max((-distance_to_edge / 0.16) - 1, -2), -1)
+        return reward, success
+
+
+    def get_cube_overlap(self):
         # Unpack the parameters
-        x_cube, y_cube = self.cube_center[:2]
-        w_cube, l_cube = self.cube_size[:2]
+        x_cube, y_cube = self.cube_position[:2]
+        w_cube = l_cube = self.cube_size
         
         goal_center = self.goal_region_1_center if self.current_goal == 0 else self.goal_region_2_center
         x_goal, y_goal = goal_center[:2] 

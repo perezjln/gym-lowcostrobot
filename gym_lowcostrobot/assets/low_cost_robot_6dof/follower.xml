@@ -4,15 +4,15 @@
 
   <default>
     <default class="follower">
-      <joint armature="0.1" damping="1" actuatorfrcrange="-10 10"/>
-      <position kp="1000" kv="100" inheritrange="1"/>
+      <joint armature="0.1" damping="1." actuatorfrcrange="-10 10"/>
+      <position kp="1000" kv="10" inheritrange="1"/>
       <default class="visual">
-        <geom type="mesh" group="2" contype="0" conaffinity="0"/>
+        <geom type="mesh" group="2" contype="1" conaffinity="1"/>
       </default>
       <default class="collision">
         <geom type="mesh" group="3" mass="0" density="0"/>
         <default class="finger">
-          <geom type="mesh" priority="1" condim="6" solimp="0.015 1 0.036" friction="0.8 0.02 0.01"/>
+          <geom type="mesh" priority="1" condim="6" solimp="0.015 1 0.036" friction="1.5"/>
         </default>
       </default>
       <site size="0.001" rgba="0.5 0.5 0.5 0.3" group="4"/>
@@ -69,7 +69,7 @@
           
           <body name="link_3" pos="-0.0148 0.0065 0.1083">
             <inertial pos="-0.05537 0.014505 0.0028659" quat="8.17663e-05 0.710999 -4.16983e-05 0.703193" mass="0.06379" diaginertia="2.45081e-05 2.2231e-05 7.34061e-06"/>
-            <joint name="joint_3" pos="0 0 0" axis="0 1 0" range="-3.14 3.14"/>
+            <joint name="joint_3" pos="0 0 0" axis="0 -1 0" range="-3.14 3.14"/>
             <geom mesh="link_3" class="visual" material="white"/>
             <geom mesh="link_3_motor" class="visual" material="black"/>
             <geom mesh="link_3_collision" class="collision"/>
