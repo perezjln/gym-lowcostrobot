@@ -57,6 +57,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Choose between 5dof and 6dof lowcost robot simulation.")
     parser.add_argument('--device', type=str, default='/dev/ttyACM0', help='Port name (e.g., COM1, /dev/ttyUSB0, /dev/tty.usbserial-*)')
     parser.add_argument('--env-name', type=str, default='PushCubeLoop-v0', help='Specify the gym-lowcost robot env to test.')
-    args = parser.parse_args(args)
+    args = parser.parse_args()
 
-    do_sim()
+    do_sim(args)

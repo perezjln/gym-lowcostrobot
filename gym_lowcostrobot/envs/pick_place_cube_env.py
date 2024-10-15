@@ -116,14 +116,18 @@ class PickPlaceCubeEnv(Env):
         self.threshold_height = 0.5
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
-        self.target_low = np.array([-0.15, 0.10, 0.015])
-        self.target_high = np.array([0.15, 0.25, 0.035])
+        self.target_low = np.array([-0.15, 0.10, 0.005])
+        self.target_high = np.array([0.15, 0.25, 0.005])
 
         # get dof addresses
         self.cube_dof_id = self.model.body("cube").dofadr[0]
         self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
+        self.arm_dof_vel_id = self.arm_dof_id
         # if the arm is not at address 0 then the cube will have 7 states in qpos and 6 in qvel
-        self.arm_dof_vel_id = self.arm_dof_id if self.arm_dof_id==0 else self.arm_dof_id - 1
+        if self.arm_dof_id != 0:
+            self.arm_dof_id = self.arm_dof_vel_id + 1
+
+        self.control_decimation = 4 # number of simulation steps per control step
 
 
     def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="link_6", nb_dof=6, regularization=1e-6):
@@ -197,7 +201,7 @@ class PickPlaceCubeEnv(Env):
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-            target_qpos = action * (target_high - target_low) / 2 + (target_high + target_low) / 2
+            target_qpos = np.array(action).clip(target_low, target_high)
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
@@ -205,9 +209,10 @@ class PickPlaceCubeEnv(Env):
         self.data.ctrl = target_qpos
 
         # Step the simulation forward
-        mujoco.mj_step(self.model, self.data)
-        if self.render_mode == "human":
-            self.viewer.sync()
+        for _ in range(self.control_decimation):
+            mujoco.mj_step(self.model, self.data)
+            if self.render_mode == "human":
+                self.viewer.sync()
 
     def get_observation(self):
         # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, q6, gripper]
@@ -235,10 +240,13 @@ class PickPlaceCubeEnv(Env):
         cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof] = robot_qpos
-        self.data.qpos[self.cube_dof_id:self.cube_dof_id + 6] = np.concatenate([cube_pos, cube_rot])
+        self.data.qpos[self.cube_dof_id:self.cube_dof_id + 7] = np.concatenate([cube_pos, cube_rot])
 
         # Sample the target position
         self.target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
+
+        # update visualization
+        self.model.geom('target_region').pos = self.target_pos[:]
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)

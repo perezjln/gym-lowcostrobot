@@ -119,10 +119,14 @@ class StackTwoCubesEnv(Env):
 
         # get dof addresses
         self.red_cube_dof_id = self.model.body("cube_red").dofadr[0]
-        self.blue_cube_dof_id = self.model.body("cube_blue").dofadr[0]
+        self.blue_cube_dof_id = self.model.body("cube_blue").dofadr[0] + 1
         self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
+        self.arm_dof_vel_id = self.arm_dof_id
         # if the arm is not at address 0 then the both cubes will have 7 states in qpos and 6 in qvel each
-        self.arm_dof_vel_id = self.arm_dof_id if self.arm_dof_id==0 else self.arm_dof_id - 2
+        if self.arm_dof_id != 0:
+            self.arm_dof_id = self.arm_dof_vel_id + 2
+            
+        self.control_decimation = 4 # number of simulation steps per control step
 
     def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="link_6", nb_dof=6, regularization=1e-6):
         """
@@ -195,7 +199,7 @@ class StackTwoCubesEnv(Env):
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-            target_qpos = action * (target_high - target_low) / 2 + (target_high + target_low) / 2
+            target_qpos = np.array(action).clip(target_low, target_high)
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
@@ -203,9 +207,10 @@ class StackTwoCubesEnv(Env):
         self.data.ctrl = target_qpos
 
         # Step the simulation forward
-        mujoco.mj_step(self.model, self.data)
-        if self.render_mode == "human":
-            self.viewer.sync()
+        for _ in range(self.control_decimation):
+            mujoco.mj_step(self.model, self.data)
+            if self.render_mode == "human":
+                self.viewer.sync()
 
     def get_observation(self):
         # qpos is [xr, yr, zr, qwr, qxr, qyr, qzr, xb, yb, zb, qwb, qxb, qyb, qzb, q1, q2, q3, q4, q5, q6, gripper]
@@ -235,8 +240,8 @@ class StackTwoCubesEnv(Env):
         cube_blue_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof] = robot_qpos 
-        self.data.qpos[self.red_cube_dof_id:self.red_cube_dof_id+6] = np.concatenate([cube_red_pos, cube_red_rot])
-        self.data.qpos[self.blue_cube_dof_id:self.blue_cube_dof_id+6] = np.concatenate([cube_blue_pos, cube_blue_rot])
+        self.data.qpos[self.red_cube_dof_id:self.red_cube_dof_id+7] = np.concatenate([cube_red_pos, cube_red_rot])
+        self.data.qpos[self.blue_cube_dof_id:self.blue_cube_dof_id+7] = np.concatenate([cube_blue_pos, cube_blue_rot])
 
 
         # Step the simulation

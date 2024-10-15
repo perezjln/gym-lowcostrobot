@@ -1,4 +1,5 @@
 <mujoco model="low_cost_robot scene">
+  	<option timestep="0.005"/>
     <include file="follower.xml"/>
 
     <statistic center="0 0 0.2" extent=".8"/>
@@ -22,7 +23,7 @@
       <body name="cube" pos="0.0 0.2 0.01">
           <freejoint name="cube"/>
           <inertial pos="0 0 0" mass="0.1" diaginertia="0.00016667 0.00016667 0.00016667"/>
-          <geom friction="0.5" condim="3" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="red_box" rgba="0.5 0 0 1" priority="1"/>
+          <geom friction="0.5" condim="4" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="red_box" rgba="0.5 0 0 1" priority="1"/>
       </body>
 
       <camera name="camera_front" pos="0.049 0.888 0.317" xyaxes="-0.998 0.056 -0.000 -0.019 -0.335 0.942"/>

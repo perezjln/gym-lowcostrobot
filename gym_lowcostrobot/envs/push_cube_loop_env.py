@@ -115,8 +115,10 @@ class PushCubeLoopEnv(Env):
         # get dof addresses
         self.cube_dof_id = self.model.body("cube").dofadr[0]
         self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
+        self.arm_dof_vel_id = self.arm_dof_id
         # if the arm is not at address 0 then the cube will have 7 states in qpos and 6 in qvel
-        self.arm_dof_vel_id = self.arm_dof_id if self.arm_dof_id==0 else self.arm_dof_id - 1
+        if self.arm_dof_id != 0:
+            self.arm_dof_id = self.arm_dof_vel_id + 1
 
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
