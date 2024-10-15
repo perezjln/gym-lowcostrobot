@@ -6,7 +6,7 @@ import mujoco.viewer
 import numpy as np
 from gymnasium import Env, spaces
 
-from gym_lowcostrobot import ASSETS_PATH
+from gym_lowcostrobot import ASSETS_PATH, BASE_LINK_NAME
 
 
 class StackTwoCubesEnv(Env):
@@ -84,6 +84,8 @@ class StackTwoCubesEnv(Env):
         self.action_mode = action_mode
         action_shape = {"joint": 6, "ee": 4}[action_mode]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
+        
+        self.nb_dof = 6
 
         # Set the observations space
         self.observation_mode = observation_mode
@@ -114,6 +116,13 @@ class StackTwoCubesEnv(Env):
         self.threshold_height = 0.5
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
+
+        # get dof addresses
+        self.red_cube_dof_id = self.model.body("cube_red").dofadr[0]
+        self.blue_cube_dof_id = self.model.body("cube_blue").dofadr[0]
+        self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
+        # if the arm is not at address 0 then the both cubes will have 7 states in qpos and 6 in qvel each
+        self.arm_dof_vel_id = self.arm_dof_id if self.arm_dof_id==0 else self.arm_dof_id - 2
 
     def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="link_6", nb_dof=6, regularization=1e-6):
         """
@@ -157,7 +166,7 @@ class StackTwoCubesEnv(Env):
             qdot /= qdot_norm
 
         # Read the current joint positions
-        qpos = self.data.qpos[:nb_dof]
+        qpos = self.data.qpos[self.arm_dof_id:self.arm_dof_id+nb_dof]
 
         # Compute the new joint positions
         q_target_pos = qpos + qdot * step
@@ -202,8 +211,8 @@ class StackTwoCubesEnv(Env):
         # qpos is [xr, yr, zr, qwr, qxr, qyr, qzr, xb, yb, zb, qwb, qxb, qyb, qzb, q1, q2, q3, q4, q5, q6, gripper]
         # qvel is [vxr, vyr, vzr, wxr, wyr, wzr, vxb, vyb, vzb, wxb, wyb, wzb, dq1, dq2, dq3, dq4, dq5, dq6, dgripper]
         observation = {
-            "arm_qpos": self.data.qpos[14:20].astype(np.float32),
-            "arm_qvel": self.data.qvel[12:18].astype(np.float32),
+            "arm_qpos": self.data.qpos[self.arm_dof_id+self.arm_dof_id+self.nb_dof].astype(np.float32),
+            "arm_qvel": self.data.qvel[self.arm_dof_vel_id:self.arm_dof_vel_id+self.nb_dof].astype(np.float32),
         }
         if self.observation_mode in ["image", "both"]:
             self.renderer.update_scene(self.data, camera="camera_front")
@@ -211,8 +220,8 @@ class StackTwoCubesEnv(Env):
             self.renderer.update_scene(self.data, camera="camera_top")
             observation["image_top"] = self.renderer.render()
         if self.observation_mode in ["state", "both"]:
-            observation["cube_red_pos"] = self.data.qpos[:3].astype(np.float32)
-            observation["cube_blue_pos"] = self.data.qpos[7:10].astype(np.float32)
+            observation["cube_red_pos"] = self.data.qpos[self.red_cube_dof_id:self.red_cube_dof_id+3].astype(np.float32)
+            observation["cube_blue_pos"] = self.data.qpos[self.blue_cube_dof_id:self.blue_cube_dof_id+3].astype(np.float32)
         return observation
 
     def reset(self, seed=None, options=None):
@@ -225,7 +234,10 @@ class StackTwoCubesEnv(Env):
         cube_blue_pos = self.np_random.uniform(self.cube_low, self.cube_high)
         cube_blue_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[:] = np.concatenate([cube_red_pos, cube_red_rot, cube_blue_pos, cube_blue_rot, robot_qpos])
+        self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof] = robot_qpos 
+        self.data.qpos[self.red_cube_dof_id:self.red_cube_dof_id+6] = np.concatenate([cube_red_pos, cube_red_rot])
+        self.data.qpos[self.blue_cube_dof_id:self.blue_cube_dof_id+6] = np.concatenate([cube_blue_pos, cube_blue_rot])
+
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -240,8 +252,8 @@ class StackTwoCubesEnv(Env):
         observation = self.get_observation()
 
         # Get the position of the cube and the distance between the end effector and the cube
-        cube_red_pos = self.data.qpos[:3]
-        cube_blue_pos = self.data.qpos[7:10]
+        cube_red_pos = self.data.qpos[self.red_cube_dof_id:self.red_cube_dof_id+3]
+        cube_blue_pos = self.data.qpos[self.blue_cube_dof_id:self.blue_cube_dof_id+3]
         target_pos = cube_red_pos + np.array([0.0, 0.0, 0.03])
         cube_blue_to_target = np.linalg.norm(cube_blue_pos - target_pos)
 

@@ -6,7 +6,7 @@ import mujoco.viewer
 import numpy as np
 from gymnasium import Env, spaces
 
-from gym_lowcostrobot import ASSETS_PATH
+from gym_lowcostrobot import ASSETS_PATH, BASE_LINK_NAME
 
 
 class PickPlaceCubeEnv(Env):
@@ -85,6 +85,8 @@ class PickPlaceCubeEnv(Env):
         action_shape = {"joint": 6, "ee": 4}[action_mode]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
 
+        self.nb_dof = 6
+
         # Set the observations space
         self.observation_mode = observation_mode
         observation_subspaces = {
@@ -116,6 +118,13 @@ class PickPlaceCubeEnv(Env):
         self.cube_high = np.array([0.15, 0.25, 0.015])
         self.target_low = np.array([-0.15, 0.10, 0.015])
         self.target_high = np.array([0.15, 0.25, 0.035])
+
+        # get dof addresses
+        self.cube_dof_id = self.model.body("cube").dofadr[0]
+        self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
+        # if the arm is not at address 0 then the cube will have 7 states in qpos and 6 in qvel
+        self.arm_dof_vel_id = self.arm_dof_id if self.arm_dof_id==0 else self.arm_dof_id - 1
+
 
     def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="link_6", nb_dof=6, regularization=1e-6):
         """
@@ -159,7 +168,7 @@ class PickPlaceCubeEnv(Env):
             qdot /= qdot_norm
 
         # Read the current joint positions
-        qpos = self.data.qpos[:nb_dof]
+        qpos = self.data.qpos[self.arm_dof_id:self.arm_dof_id+nb_dof]
 
         # Compute the new joint positions
         q_target_pos = qpos + qdot * step
@@ -204,8 +213,8 @@ class PickPlaceCubeEnv(Env):
         # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, q6, gripper]
         # qvel is [vx, vy, vz, wx, wy, wz, dq1, dq2, dq3, dq4, dq5, dq6, dgripper]
         observation = {
-            "arm_qpos": self.data.qpos[7:13].astype(np.float32),
-            "arm_qvel": self.data.qvel[6:12].astype(np.float32),
+            "arm_qpos": self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof].astype(np.float32),
+            "arm_qvel": self.data.qvel[self.arm_dof_vel_id:self.arm_dof_vel_id+self.nb_dof].astype(np.float32),
             "target_pos": self.target_pos,
         }
         if self.observation_mode in ["image", "both"]:
@@ -214,7 +223,7 @@ class PickPlaceCubeEnv(Env):
             self.renderer.update_scene(self.data, camera="camera_top")
             observation["image_top"] = self.renderer.render()
         if self.observation_mode in ["state", "both"]:
-            observation["cube_pos"] = self.data.qpos[:3].astype(np.float32)
+            observation["cube_pos"] = self.data.qpos[self.cube_dof_id:self.cube_dof_id+3].astype(np.float32)
         return observation
 
     def reset(self, seed=None, options=None):
@@ -225,7 +234,8 @@ class PickPlaceCubeEnv(Env):
         cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
         cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[:] = np.concatenate([cube_pos, cube_rot, robot_qpos])
+        self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof] = robot_qpos
+        self.data.qpos[self.cube_dof_id:self.cube_dof_id + 6] = np.concatenate([cube_pos, cube_rot])
 
         # Sample the target position
         self.target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
@@ -243,7 +253,7 @@ class PickPlaceCubeEnv(Env):
         observation = self.get_observation()
 
         # Get the position of the cube and the distance between the end effector and the cube
-        cube_pos = self.data.qpos[:3]
+        cube_pos = self.data.qpos[self.cube_dof_id:self.cube_dof_id+3]
         cube_to_target = np.linalg.norm(cube_pos - self.target_pos)
 
         # Compute the reward
