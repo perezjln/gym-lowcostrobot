@@ -34,7 +34,6 @@
 	  <camera name="camera_vizu" pos="-0.1 0.6 0.3" quat="-0.15 -0.1 0.6 1"/>
 	  
     <geom name="target_region" type="cylinder" pos=".06 .135 0.005" size="0.035 0.01" rgba="0 0 1 0.3"  contype="0" conaffinity="0" />
-
     </worldbody>
   
   </mujoco>

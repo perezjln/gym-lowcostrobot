@@ -129,7 +129,6 @@ class PushCubeEnv(Env):
 
         self.control_decimation = 4 # number of simulation steps per control step
 
-
     def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="link_6", nb_dof=6, regularization=1e-6):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
