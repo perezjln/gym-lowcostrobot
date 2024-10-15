@@ -6,7 +6,7 @@ import mujoco.viewer
 import numpy as np
 from gymnasium import Env, spaces
 
-from gym_lowcostrobot import ASSETS_PATH
+from gym_lowcostrobot import ASSETS_PATH, BASE_LINK_NAME
 
 
 class PushCubeLoopEnv(Env):
@@ -110,10 +110,15 @@ class PushCubeLoopEnv(Env):
 
         # Set additional utils
         self.threshold_height = 0.5
+        self.nb_dof = 6
+
+        # get dof addresses
+        self.cube_dof_id = self.model.body("cube").dofadr[0]
+        self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
 
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
-        self.cube_q_id = self.model.body("cube").id
+        
         self.cube_size = 0.015
         self.cube_position = np.array([0.0,0.0,0.0])
 
@@ -124,7 +129,7 @@ class PushCubeLoopEnv(Env):
         self.goal_region_2_center = self.model.geom_pos[goal_region_2_id]
 
         self.goal_region_high = self.model.geom_size[goal_region_1_id] 
-        self.goal_region_high[:2] -= 0.005 # offset sampling region to keep cube within
+        self.goal_region_high[:2] -= 0.008 # offset sampling region to keep cube within
         self.goal_region_low = self.goal_region_high * np.array([-1., -1., 1.])
         self.current_goal = 0 # 0 for first goal region , and 1 for second goal region
         self.control_decimation = 4 # number of simulation steps per control step
@@ -175,7 +180,7 @@ class PushCubeLoopEnv(Env):
             qdot /= qdot_norm
   
         # Read the current joint positions
-        qpos = self.data.qpos[:nb_dof]
+        qpos = self.data.qpos[self.arm_dof_id:self.arm_dof_id+nb_dof]
 
         # Compute the new joint positions
         q_target_pos = qpos + qdot * step
@@ -221,8 +226,8 @@ class PushCubeLoopEnv(Env):
         # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, q6, gripper]
         # qvel is [vx, vy, vz, wx, wy, wz, dq1, dq2, dq3, dq4, dq5, dq6, dgripper]
         observation = {
-            "arm_qpos": self.data.qpos[7:13].astype(np.float32),
-            "arm_qvel": self.data.qvel[6:12].astype(np.float32),
+            "arm_qpos": self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof].astype(np.float32),
+            "arm_qvel": self.data.qvel[self.arm_dof_id:self.arm_dof_id+self.nb_dof].astype(np.float32),
         }
         if self.observation_mode in ["image", "both"]:
             self.renderer.update_scene(self.data, camera="camera_front")
@@ -230,7 +235,7 @@ class PushCubeLoopEnv(Env):
             self.renderer.update_scene(self.data, camera="camera_top")
             observation["image_top"] = self.renderer.render()
         if self.observation_mode in ["state", "both"]:
-            observation["cube_pos"] = self.data.qpos[:3].astype(np.float32)
+            observation["cube_pos"] = self.data.qpos[self.cube_dof_id:self.cube_dof_id+3].astype(np.float32)
         return observation
 
     def reset(self, seed=None, options=None):
@@ -244,7 +249,8 @@ class PushCubeLoopEnv(Env):
 
         cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[:] = np.concatenate([robot_qpos, cube_pos, cube_rot])
+        self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof] = robot_qpos
+        self.data.qpos[self.cube_dof_id:self.cube_dof_id+7]=np.concatenate([cube_pos, cube_rot])
         
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -281,7 +287,7 @@ class PushCubeLoopEnv(Env):
 
     def get_reward(self):
         # Get the position of the cube and the distance between the end effector and the cube
-        self.cube_position = self.data.qpos[self.cube_q_id-3:self.cube_q_id]
+        self.cube_position = self.data.qpos[self.cube_dof_id:self.cube_dof_id+3]
         overlap = self.get_cube_overlap()
         # if the intersection is above 95% consider the episode a success and switch goals:
         success = 0

@@ -48,12 +48,12 @@
   </asset>
 
   <worldbody>
-    <body name="base_link" childclass="follower">
+    <body name="base_link" childclass="follower" quat="-0.707 0. 0. 0.707">
       <geom mesh="base_link" class="visual" material="white"/>
       <geom mesh="base_link_motor" class="visual" material="black"/>
       <geom mesh="base_link_collision" class="collision"/>
       
-      <body name="link_1" pos="0.012 0 0.0409">
+      <body name="link_1" pos="0.012 0 0.0409" >
         <inertial pos="0.011924 -0.00048792 0.013381" quat="-0.0190903 0.705417 0.0178052 0.708312" mass="0.05014" diaginertia="1.44921e-05 1.2371e-05 7.59138e-06"/>
         <joint name="joint_1" pos="0 0 0" axis="0 0 -1" range="-3.14 3.14"/>
         <geom mesh="link_1" class="visual" material="white"/>
