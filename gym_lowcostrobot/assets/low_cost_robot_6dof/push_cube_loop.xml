@@ -30,8 +30,8 @@
 			<geom friction="1.5 1.5 1.5" condim="4" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="cube" rgba="0.5 0 0 1" priority="1"/>
 		</body>
 
-		<camera name="camera_front" pos="0.049 0.888 0.317" xyaxes="-0.998 0.056 -0.000 -0.019 -0.335 0.942"/>
-		<camera name="camera_top" pos="0 0 1" euler="0 0 0" mode="fixed"/>
+		<camera name="camera_front" pos="0.049 0.5 0.225" xyaxes="-0.998 0.056 -0.000 -0.019 -0.335 0.942"/>
+		<camera name="camera_top" pos="0 0.1 0.6" euler="0 0 0" mode="fixed"/>
 		<camera name="camera_vizu" pos="-0.1 0.6 0.3" quat="-0.15 -0.1 0.6 1"/>
 		
         <!-- Goal Region 1 -->

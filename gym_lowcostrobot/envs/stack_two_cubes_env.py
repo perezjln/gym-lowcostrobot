@@ -219,14 +219,14 @@ class StackTwoCubesEnv(Env):
             "arm_qpos": self.data.qpos[self.arm_dof_id+self.arm_dof_id+self.nb_dof].astype(np.float32),
             "arm_qvel": self.data.qvel[self.arm_dof_vel_id:self.arm_dof_vel_id+self.nb_dof].astype(np.float32),
         }
+        if self.observation_mode in ["state", "both"]:
+            observation["cube_red_pos"] = self.data.qpos[self.red_cube_dof_id:self.red_cube_dof_id+3].astype(np.float32)
+            observation["cube_blue_pos"] = self.data.qpos[self.blue_cube_dof_id:self.blue_cube_dof_id+3].astype(np.float32)
         if self.observation_mode in ["image", "both"]:
             self.renderer.update_scene(self.data, camera="camera_front")
             observation["image_front"] = self.renderer.render()
             self.renderer.update_scene(self.data, camera="camera_top")
             observation["image_top"] = self.renderer.render()
-        if self.observation_mode in ["state", "both"]:
-            observation["cube_red_pos"] = self.data.qpos[self.red_cube_dof_id:self.red_cube_dof_id+3].astype(np.float32)
-            observation["cube_blue_pos"] = self.data.qpos[self.blue_cube_dof_id:self.blue_cube_dof_id+3].astype(np.float32)
         return observation
 
     def reset(self, seed=None, options=None):
@@ -243,10 +243,9 @@ class StackTwoCubesEnv(Env):
         self.data.qpos[self.red_cube_dof_id:self.red_cube_dof_id+7] = np.concatenate([cube_red_pos, cube_red_rot])
         self.data.qpos[self.blue_cube_dof_id:self.blue_cube_dof_id+7] = np.concatenate([cube_blue_pos, cube_blue_rot])
 
-
         # Step the simulation
-        mujoco.mj_forward(self.model, self.data)
-
+        mujoco.mj_forward(self.model, self.data)   
+        
         return self.get_observation(), {}
 
     def step(self, action):
