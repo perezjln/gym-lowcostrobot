@@ -1,6 +1,6 @@
 <mujoco model="low_cost_robot scene">
     <!-- The timestep has a big influence on the contacts stability -->
-    <option cone="elliptic" impratio="10" timestep="0.001"/>
+    <option cone="elliptic" impratio="10" timestep="0.005"/>
   
     <include file="follower.xml"/>
   
@@ -22,17 +22,17 @@
     <worldbody>
       <light pos="0 0 3" dir="0 0 -1" directional="false"/>
       <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" pos="0 0 0" friction="0.1"/>
-      <body name="box" pos="0.0 0.2 0.01">
+      <body name="cube" pos="0.0 0.2 0.01">
           <freejoint name="red_box_joint"/>
           <inertial pos="0 0 0" mass="0.1" diaginertia="0.00016667 0.00016667 0.00016667"/>
-          <geom friction="0.5" condim="3" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="red_box" rgba="0.5 0 0 1" priority="1"/>
+          <geom friction="0.5" condim="4" pos="0 0 0" size="0.015 0.015 0.015" type="box" name="red_box" rgba="0.5 0 0 1" priority="1"/>
       </body>
 
-	  <camera name="camera_front" pos="0.049 0.888 0.317" xyaxes="-0.998 0.056 -0.000 -0.019 -0.335 0.942"/>
-	  <camera name="camera_top" pos="0 0 1" euler="0 0 0" mode="fixed"/>
+		<camera name="camera_front" pos="0.049 0.5 0.225" xyaxes="-0.998 0.056 -0.000 -0.019 -0.335 0.942"/>
+		<camera name="camera_top" pos="0 0.1 0.6" euler="0 0 0" mode="fixed"/>
 	  <camera name="camera_vizu" pos="-0.1 0.6 0.3" quat="-0.15 -0.1 0.6 1"/>
 
-	  <site name="cube_target" pos="1 0 0" size="0.01" rgba="1 0 0 1" />
+    <geom name="target_region" type="cylinder" pos=".06 .135 0.005" size="0.035 0.01" rgba="0 0 1 0.3"  contype="0" conaffinity="0" />
 	  
     </worldbody>
   

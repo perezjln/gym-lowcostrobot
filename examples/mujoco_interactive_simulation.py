@@ -7,7 +7,7 @@ import mujoco.viewer
 
 def do_interactive_sim(robot_id):
     if robot_id == "6dof":
-        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_robot_6dof/reach_cube.xml")
+        m = mujoco.MjModel.from_xml_path("gym_lowcostrobot/assets/low_cost_robot_6dof/push_cube_loop.xml")#reach_cube.xml")
 
     data = mujoco.MjData(m)
 

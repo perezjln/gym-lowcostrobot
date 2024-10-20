@@ -6,7 +6,7 @@ import mujoco.viewer
 import numpy as np
 from gymnasium import Env, spaces
 
-from gym_lowcostrobot import ASSETS_PATH
+from gym_lowcostrobot import ASSETS_PATH, BASE_LINK_NAME
 
 
 class ReachCubeEnv(Env):
@@ -84,6 +84,8 @@ class ReachCubeEnv(Env):
         action_shape = {"joint": 6, "ee": 4}[action_mode]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
 
+        self.nb_dof = 6
+
         # Set the observations space
         self.observation_mode = observation_mode
         observation_subspaces = {
@@ -97,6 +99,8 @@ class ReachCubeEnv(Env):
         if self.observation_mode in ["state", "both"]:
             observation_subspaces["cube_pos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
         self.observation_space = gym.spaces.Dict(observation_subspaces)
+
+        self.control_decimation = 4 # number of simulation steps per control step
 
         # Set the render utilities
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -112,6 +116,14 @@ class ReachCubeEnv(Env):
         self.threshold_height = 0.5
         self.cube_low = np.array([-0.15, 0.10, 0.015])
         self.cube_high = np.array([0.15, 0.25, 0.015])
+
+        # get dof addresses
+        self.cube_dof_id = self.model.body("cube").dofadr[0]
+        self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
+        self.arm_dof_vel_id = self.arm_dof_id
+        # if the arm is not at address 0 then the cube will have 7 states in qpos and 6 in qvel
+        if self.arm_dof_id != 0:
+            self.arm_dof_id = self.arm_dof_vel_id + 1
 
     def inverse_kinematics(
         self,
@@ -163,7 +175,7 @@ class ReachCubeEnv(Env):
         qdot = jac_pinv @ delta_pos
 
         # Add nullspace regularization to keep joint positions close to the home position
-        qpos = self.data.qpos[:nb_dof]
+        qpos = self.data.qpos[self.arm_dof_id:self.arm_dof_id+nb_dof]
         nullspace_reg = nullspace_weight * (home_position - qpos)
         qdot += nullspace_reg
 
@@ -199,7 +211,7 @@ class ReachCubeEnv(Env):
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-            target_qpos = action * (target_high - target_low) / 2 + (target_high + target_low) / 2
+            target_qpos = np.array(action).clip(target_low, target_high)
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
@@ -207,16 +219,17 @@ class ReachCubeEnv(Env):
         self.data.ctrl = target_qpos
 
         # Step the simulation forward
-        mujoco.mj_step(self.model, self.data)
-        if self.render_mode == "human":
-            self.viewer.sync()
+        for _ in range(self.control_decimation):
+            mujoco.mj_step(self.model, self.data)
+            if self.render_mode == "human":
+                self.viewer.sync()
 
     def get_observation(self):
         # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, q6, gripper]
         # qvel is [vx, vy, vz, wx, wy, wz, dq1, dq2, dq3, dq4, dq5, dq6, dgripper]
         observation = {
-            "arm_qpos": self.data.qpos[7:13].astype(np.float32),
-            "arm_qvel": self.data.qvel[6:12].astype(np.float32),
+            "arm_qpos": self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof].astype(np.float32),
+            "arm_qvel": self.data.qvel[self.arm_dof_vel_id:self.arm_dof_vel_id+self.nb_dof].astype(np.float32),
         }
         if self.observation_mode in ["image", "both"]:
             self.renderer.update_scene(self.data, camera="camera_front")
@@ -224,7 +237,7 @@ class ReachCubeEnv(Env):
             self.renderer.update_scene(self.data, camera="camera_top")
             observation["image_top"] = self.renderer.render()
         if self.observation_mode in ["state", "both"]:
-            observation["cube_pos"] = self.data.qpos[:3].astype(np.float32)
+            observation["cube_pos"] = self.data.qpos[self.cube_dof_id:self.cube_dof_id+3].astype(np.float32)
         return observation
 
     def reset(self, seed=None, options=None):
@@ -235,7 +248,8 @@ class ReachCubeEnv(Env):
         cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
         cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[:] = np.concatenate([cube_pos, cube_rot, robot_qpos])
+        self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof] = robot_qpos
+        self.data.qpos[self.cube_dof_id:self.cube_dof_id+7] = np.concatenate([cube_pos, cube_rot])
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
