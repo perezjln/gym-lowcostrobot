@@ -228,6 +228,11 @@ class ReachCubeEnv(Env):
         - EE mode: [dx, dy, dz, gripper]
         - Joint mode: [q1, q2, q3, q4, q5, gripper]
         """
+        if np.array(action).shape != self.action_space.shape:
+            raise ValueError("Action dimension mismatch")
+        
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        
         if self.action_mode == "ee":
             ee_action = action[:3]
 
