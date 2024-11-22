@@ -6,14 +6,14 @@ import mujoco.viewer
 import numpy as np
 from gymnasium import Env, spaces
 
-from gym_lowcostrobot import ASSETS_PATH, BASE_LINK_NAME
+from gym_lowcostrobot import ASSETS_PATH
 
 
 class PickPlaceCubeEnv(Env):
     """
     ## Description
 
-    The robot has to pick and place a cube with its end-effector.
+    The robot has to pick and place a cube with its end-effector and place it on a target position.
 
     ## Action space
 
@@ -63,7 +63,8 @@ class PickPlaceCubeEnv(Env):
 
     ## Reward
 
-    The reward is the negative distance between the cube and the target position.
+    For a dense reward type, it is the negative distance between the target position and the cube.
+    For a sparse reward type, it is -1 when the distance between the target position and the cube exceeds a specified distance_threshold.
 
     ## Arguments
 
@@ -73,19 +74,35 @@ class PickPlaceCubeEnv(Env):
     - `render_mode (str)`: the render mode, can be "human" or "rgb_array", default is None.
     """
 
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 200}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 25}
 
-    def __init__(self, observation_mode="image", action_mode="joint", render_mode=None):
+    def __init__(
+        self,
+        observation_mode="image",
+        action_mode="joint",
+        reward_type="sparse",
+        block_gripper=True,
+        distance_threshold=0.05,
+        cube_xy_range=0.3,
+        target_xy_range=0.3,
+        goal_z_range=0.1,
+        n_substeps=20,
+        render_mode=None,
+    ):
         # Load the MuJoCo model and data
-        self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "pick_place_cube.xml"), {})
+        self.model = mujoco.MjModel.from_xml_path(os.path.join(ASSETS_PATH, "pick_place_cube.xml"))
         self.data = mujoco.MjData(self.model)
 
         # Set the action space
         self.action_mode = action_mode
-        action_shape = {"joint": 6, "ee": 4}[action_mode]
+        self.block_gripper = block_gripper
+        action_shape = {"joint": 6, "ee": 3}[self.action_mode]
+        action_shape += 0 if self.block_gripper and self.action_mode == "ee" else 1
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
 
-        self.nb_dof = 6
+        self.num_dof = 6
+        self.distance_threshold = distance_threshold
+        self.reward_type = reward_type
 
         # Set the observations space
         self.observation_mode = observation_mode
@@ -102,81 +119,120 @@ class PickPlaceCubeEnv(Env):
             observation_subspaces["cube_pos"] = spaces.Box(low=-10.0, high=10.0, shape=(3,))
         self.observation_space = gym.spaces.Dict(observation_subspaces)
 
+        self.control_decimation = n_substeps  # number of simulation steps per control step
+
         # Set the render utilities
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
         if self.render_mode == "human":
-            self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
-            self.viewer.cam.azimuth = -75
-            self.viewer.cam.distance = 1
+            self.viewer = mujoco.viewer.launch_passive(self.model, self.data, show_left_ui=False, show_right_ui=False)
+            self.viewer.cam.azimuth = -45.0
+            self.viewer.cam.distance = 1.5
+            self.viewer.cam.elevation = -20.0
+            self.viewer.cam.lookat = np.array([0.0, 0.0, 0.0])
         elif self.render_mode == "rgb_array":
             self.rgb_array_renderer = mujoco.Renderer(self.model, height=640, width=640)
 
         # Set additional utils
-        self.threshold_height = 0.5
-        self.cube_low = np.array([-0.15, 0.10, 0.015])
-        self.cube_high = np.array([0.15, 0.25, 0.015])
-        self.target_low = np.array([-0.15, 0.10, 0.005])
-        self.target_high = np.array([0.15, 0.25, 0.005])
+        self.cube_xy_range = cube_xy_range
+        self.target_xy_range = target_xy_range
+        self.goal_z_range = goal_z_range
 
-        # get dof addresses
-        self.cube_dof_id = self.model.body("cube").dofadr[0]
-        self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
-        self.arm_dof_vel_id = self.arm_dof_id
-        # if the arm is not at address 0 then the cube will have 7 states in qpos and 6 in qvel
-        if self.arm_dof_id != 0:
-            self.arm_dof_id = self.arm_dof_vel_id + 1
+        self.cube_low = np.array([-self.cube_xy_range / 2, -self.cube_xy_range / 2, 0])
+        self.cube_high = np.array([self.cube_xy_range / 2, self.cube_xy_range / 2, 0])
+        self.target_low = np.array([-self.target_xy_range / 2, -self.target_xy_range / 2, 0])
+        self.target_high = np.array([self.target_xy_range / 2, self.target_xy_range / 2, goal_z_range])
 
-        self.control_decimation = 4 # number of simulation steps per control step
+        # Shift in y-axis to sample from positive coordinates in the y-axis
+        self.cube_low[1] += 0.165
+        self.cube_high[1] += 0.10
+        self.target_low[1] += 0.165
+        self.target_high[1] += 0.10
+
+        # control range
+        self.ctrl_range = self.model.actuator_ctrlrange
 
 
-    def inverse_kinematics(self, ee_target_pos, step=0.2, joint_name="link_6", nb_dof=6, regularization=1e-6):
+    def check_joint_limits(self, q):
+        """Check if the joints is under or above its limits"""
+        for i in range(len(q)):
+            q[i] = max(self.model.jnt_range[i][0], min(q[i], self.model.jnt_range[i][1]))
+
+        return q
+
+    def inverse_kinematics(
+        self,
+        ee_target_pos,
+        ee_site="end_effector_site",
+        num_dof=6,
+        step=0.5,
+        lm_damping=0.15,
+        max_iter=10,
+        tolerance_err=0.01,
+        home_position=None,
+        nullspace_weight=0.0,
+    ):
         """
         Computes the inverse kinematics for a robotic arm to reach the target end effector position.
 
         :param ee_target_pos: numpy array of target end effector position [x, y, z]
+        :param ee_site: str, name of the end effector site
+        :param num_dof: int, number of degrees of freedom
         :param step: float, step size for the iteration
-        :param joint_name: str, name of the end effector joint
-        :param nb_dof: int, number of degrees of freedom
-        :param regularization: float, regularization factor for the pseudoinverse computation
+        :param lm_damping: float, regularization factor for the pseudoinverse computation
+        :param max_iter: int, maximum number of iterations
+        :param tolerance_err: float, tolerance error
+        :param home_position: numpy array of home joint positions to regularize towards
+        :param nullspace_weight: float, weight for the nullspace regularization
         :return: numpy array of target joint positions
         """
-        try:
-            # Get the joint ID from the name
-            joint_id = self.model.body(joint_name).id
-        except KeyError:
-            raise ValueError(f"Body name '{joint_name}' not found in the model.")
 
-        # Get the current end effector position
-        # ee_pos = self.d.geom_xpos[joint_id]
-        ee_id = self.model.body(joint_name).id
-        ee_pos = self.data.geom_xpos[ee_id]
+        if home_position is None:
+            home_position = np.zeros(num_dof)  # Default to zero if no home position is provided
 
-        # Compute the Jacobian
-        jac = np.zeros((3, self.model.nv))
-        mujoco.mj_jacBodyCom(self.model, self.data, jac, None, joint_id)
+        jacp = np.zeros((3, self.model.nv))
+        ee_id = self.model.site(ee_site).id
 
-        # Compute the difference between target and current end effector positions
-        delta_pos = ee_target_pos - ee_pos
+        # Initial joint positions
+        q = self.data.qpos[:num_dof].copy()
 
-        # Compute the pseudoinverse of the Jacobian with regularization
-        jac_reg = jac[:, :nb_dof].T @ jac[:, :nb_dof] + regularization * np.eye(nb_dof)
-        jac_pinv = np.linalg.inv(jac_reg) @ jac[:, :nb_dof].T
+        for _ in range(max_iter):
+            self.data.qpos[:num_dof] = q
+            mujoco.mj_forward(self.model, self.data)
 
-        # Compute target joint velocities
-        qdot = jac_pinv @ delta_pos
+            ee_pos = self.data.site(ee_id).xpos
+            error = ee_target_pos - ee_pos
+            error_norm = np.linalg.norm(error)
 
-        # Normalize joint velocities to avoid excessive movements
-        qdot_norm = np.linalg.norm(qdot)
-        if qdot_norm > 1.0:
-            qdot /= qdot_norm
+            # Stop iterations
+            if error_norm < tolerance_err:
+                break
 
-        # Read the current joint positions
-        qpos = self.data.qpos[self.arm_dof_id:self.arm_dof_id+nb_dof]
+            # Jacobian
+            mujoco.mj_jacSite(self.model, self.data, jacp, None, ee_id)
 
-        # Compute the new joint positions
-        q_target_pos = qpos + qdot * step
+            # Damped least squares (Levenberg-Marquardt Algorithm)
+            jac_reg = jacp[:, :num_dof].T @ jacp[:, :num_dof] + lm_damping * np.eye(num_dof)
+            jac_pinv = np.linalg.inv(jac_reg) @ jacp[:, :num_dof].T
+            qdot = jac_pinv @ error
 
+            # Nullspace control biasing joint velocities towards the home configuration
+            qdot += (np.eye(num_dof) - np.linalg.pinv(jacp[:, :num_dof]) @ jacp[:, :num_dof]) @ (
+                nullspace_weight * (home_position - self.data.qpos[:num_dof])
+            )
+
+            # Normalize joint velocity
+            qdot_norm = np.linalg.norm(qdot)
+            if qdot_norm > 1.0:
+                qdot /= qdot_norm
+
+            # Compute the new joint positions. Integrate joint velocities to obtain joint positions.
+            q += qdot * step
+
+            # Check limits
+            q = self.check_joint_limits(q)
+
+        q_target_pos = q
         return q_target_pos
 
     def apply_action(self, action):
@@ -185,23 +241,33 @@ class PickPlaceCubeEnv(Env):
 
         Action shape
         - EE mode: [dx, dy, dz, gripper]
-        - Joint mode: [q1, q2, q3, q4, q5, q6, gripper]
+        - Joint mode: [q1, q2, q3, q4, q5, gripper]
         """
+        if np.array(action).shape != self.action_space.shape:
+            raise ValueError("Action dimension mismatch")
+        
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+
         if self.action_mode == "ee":
-            # raise NotImplementedError("EE mode not implemented yet")
-            ee_action, gripper_action = action[:3], action[-1]
+            ee_action, gripper_action = action[:3], action[3]
 
             # Update the robot position based on the action
-            ee_id = self.model.body("link_6").id
-            ee_target_pos = self.data.xpos[ee_id] + ee_action
+            ee_id = self.model.site("end_effector_site").id
+            ee_target_pos = self.data.site(ee_id).xpos + ee_action * 0.05  # limit maximum change in position
+            ee_target_pos[2] = np.max((0, ee_target_pos[2]))
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
             target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos)
-            target_qpos[-1:] = gripper_action
+            
+            #Update the robot gripper position based on the action 
+            target_gripper_pos = gripper_action * 0.2
+            current_gripper_joint_angle = self.data.qpos[self.num_dof-1].copy()
+            target_qpos[-1:] = np.clip(current_gripper_joint_angle + target_gripper_pos, self.ctrl_range[-1, 0], self.ctrl_range[-1, 1])
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-            target_qpos = np.array(action).clip(target_low, target_high)
+            current_arm_joint_angles = self.data.qpos[: self.num_dof].copy()
+            target_qpos = np.array(action).clip(target_low, target_high) + current_arm_joint_angles
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
@@ -215,11 +281,11 @@ class PickPlaceCubeEnv(Env):
                 self.viewer.sync()
 
     def get_observation(self):
-        # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, q6, gripper]
-        # qvel is [vx, vy, vz, wx, wy, wz, dq1, dq2, dq3, dq4, dq5, dq6, dgripper]
+        # qpos is [x, y, z, qw, qx, qy, qz, q1, q2, q3, q4, q5, gripper]
+        # qvel is [vx, vy, vz, wx, wy, wz, dq1, dq2, dq3, dq4, dq5, dgripper]
         observation = {
-            "arm_qpos": self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof].astype(np.float32),
-            "arm_qvel": self.data.qvel[self.arm_dof_vel_id:self.arm_dof_vel_id+self.nb_dof].astype(np.float32),
+            "arm_qpos": self.data.qpos[: self.num_dof].astype(np.float32),
+            "arm_qvel": self.data.qvel[: self.num_dof].astype(np.float32),
             "target_pos": self.target_pos,
         }
         if self.observation_mode in ["image", "both"]:
@@ -228,7 +294,7 @@ class PickPlaceCubeEnv(Env):
             self.renderer.update_scene(self.data, camera="camera_top")
             observation["image_top"] = self.renderer.render()
         if self.observation_mode in ["state", "both"]:
-            observation["cube_pos"] = self.data.qpos[self.cube_dof_id:self.cube_dof_id+3].astype(np.float32)
+            observation["cube_pos"] = self.data.qpos[self.num_dof : self.num_dof + 3].astype(np.float32).copy()
         return observation
 
     def reset(self, seed=None, options=None):
@@ -239,14 +305,14 @@ class PickPlaceCubeEnv(Env):
         cube_pos = self.np_random.uniform(self.cube_low, self.cube_high)
         cube_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[self.arm_dof_id:self.arm_dof_id+self.nb_dof] = robot_qpos
-        self.data.qpos[self.cube_dof_id:self.cube_dof_id + 7] = np.concatenate([cube_pos, cube_rot])
+        self.data.qpos[: self.num_dof] = robot_qpos
+        self.data.qpos[self.num_dof : self.num_dof + 7] = np.concatenate([cube_pos, cube_rot])
 
         # Sample the target position
         self.target_pos = self.np_random.uniform(self.target_low, self.target_high).astype(np.float32)
 
-        # update visualization
-        self.model.geom('target_region').pos = self.target_pos[:]
+        # Update visualization
+        self.model.geom("target_region").pos = self.target_pos[:]
 
         # Step the simulation
         mujoco.mj_forward(self.model, self.data)
@@ -260,13 +326,27 @@ class PickPlaceCubeEnv(Env):
         # Get the new observation
         observation = self.get_observation()
 
-        # Get the position of the cube and the distance between the end effector and the cube
-        cube_pos = self.data.qpos[self.cube_dof_id:self.cube_dof_id+3]
-        cube_to_target = np.linalg.norm(cube_pos - self.target_pos)
+        info = {"is_success": self.is_success(observation["cube_pos"], observation["target_pos"])}
 
-        # Compute the reward
-        reward = -cube_to_target
-        return observation, reward, False, False, {}
+        terminated = info["is_success"]
+        truncated = False
+        reward = self.compute_reward(observation["cube_pos"], observation["target_pos"])
+        return observation, reward, terminated, truncated, info
+
+    def goal_distance(self, goal_a, goal_b):
+        assert goal_a.shape == goal_b.shape
+        return np.linalg.norm(goal_a - goal_b, axis=-1)
+
+    def is_success(self, achieved_goal, desired_goal):
+        d = self.goal_distance(achieved_goal, desired_goal)
+        return d < self.distance_threshold
+
+    def compute_reward(self, achieved_goal, desired_goal, info=None):
+        d = self.goal_distance(achieved_goal, desired_goal)
+        if self.reward_type == "sparse":
+            return -(d > self.distance_threshold).astype(np.float32)
+        else:
+            return -d
 
     def render(self):
         if self.render_mode == "human":
