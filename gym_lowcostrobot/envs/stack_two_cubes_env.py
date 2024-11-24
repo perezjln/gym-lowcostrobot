@@ -92,7 +92,9 @@ class StackTwoCubesEnv(Env):
 
         # Set the action space
         self.action_mode = action_mode
-        action_shape = {"joint": 6, "ee": 4}[action_mode]
+        self.block_gripper = block_gripper
+        action_shape = {"joint": 6, "ee": 3}[self.action_mode]
+        action_shape += 0 if self.block_gripper and self.action_mode == "ee" else 1
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
 
         self.num_dof = 6
