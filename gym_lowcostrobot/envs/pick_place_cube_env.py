@@ -96,8 +96,8 @@ class PickPlaceCubeEnv(Env):
         # Set the action space
         self.action_mode = action_mode
         self.block_gripper = block_gripper
-        action_shape = {"joint": 6, "ee": 3}[self.action_mode]
-        action_shape += 0 if self.block_gripper and self.action_mode == "ee" else 1
+        action_shape = {"joint": 5, "ee": 3}[self.action_mode]
+        action_shape += 0 if self.block_gripper else 1
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
 
         self.num_dof = 6
@@ -267,8 +267,23 @@ class PickPlaceCubeEnv(Env):
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
-            current_arm_joint_angles = self.data.qpos[: self.num_dof].copy()
-            target_qpos = np.array(action).clip(target_low, target_high) + current_arm_joint_angles
+            # Separate arm joint angles and gripper position
+            current_joint_angles = self.data.qpos[: self.num_dof].copy()
+            arm_action = np.array(action[: self.num_dof - 1])
+            gripper_action = action[-1]
+
+            # Clip and update arm joint positions
+            target_arm_qpos = np.clip(
+                arm_action + current_joint_angles[: self.num_dof - 1],
+                target_low[: self.num_dof - 1],
+                target_high[: self.num_dof - 1],
+            )
+
+            # Clip and update gripper position
+            target_gripper_pos = np.clip(gripper_action + current_joint_angles[-1], target_low[-1], target_high[-1])
+
+            # Combine arm and gripper targets
+            target_qpos = np.append(target_arm_qpos, target_gripper_pos)
         else:
             raise ValueError("Invalid action mode, must be 'ee' or 'joint'")
 
