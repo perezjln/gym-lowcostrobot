@@ -78,11 +78,7 @@ class PushCubeLoopEnv(Env):
         self,
         observation_mode="image",
         action_mode="joint",
-        reward_type="sparse",
         block_gripper=True,
-        distance_threshold=0.05,
-        cube_xy_range=0.3,
-        target_xy_range=0.3,
         n_substeps=20,
         render_mode=None,
     ):
@@ -98,8 +94,6 @@ class PushCubeLoopEnv(Env):
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
 
         self.num_dof = 6
-        self.distance_threshold = distance_threshold
-        self.reward_type = reward_type
 
         # Set the observations space
         self.observation_mode = observation_mode
@@ -127,22 +121,7 @@ class PushCubeLoopEnv(Env):
         elif self.render_mode == "rgb_array":
             self.rgb_array_renderer = mujoco.Renderer(self.model, height=640, width=640)
 
-        # Set additional utils
-        # self.threshold_height = 0.5
-        # self.nb_dof = 6
-
-        # # get dof addresses
-        # self.cube_dof_id = self.model.body("cube").dofadr[0]
-        # self.arm_dof_id = self.model.body(BASE_LINK_NAME).dofadr[0]
-        # self.arm_dof_vel_id = self.arm_dof_id
-        # # if the arm is not at address 0 then the cube will have 7 states in qpos and 6 in qvel
-        # if self.arm_dof_id != 0:
-        #     self.arm_dof_id = self.arm_dof_vel_id + 1
-
-        self.cube_low = np.array([-0.15, 0.10, 0.015])
-        self.cube_high = np.array([0.15, 0.25, 0.015])
-
-        self.cube_size = 0.015
+        self.cube_size = 0.015 / 2
         self.cube_position = np.array([0.0, 0.0, 0.0])
 
         goal_region_1_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_GEOM, "goal_region_1")
@@ -151,7 +130,7 @@ class PushCubeLoopEnv(Env):
         self.goal_region_1_center = self.model.geom_pos[goal_region_1_id]
         self.goal_region_2_center = self.model.geom_pos[goal_region_2_id]
 
-        self.goal_region_high = self.model.geom_size[goal_region_1_id]
+        self.goal_region_high = self.model.geom_size[goal_region_1_id] / 2
         self.goal_region_high[:2] -= 0.008  # offset sampling region to keep cube within
         self.goal_region_low = self.goal_region_high * np.array([-1.0, -1.0, 1.0])
         self.current_goal = 0  # 0 for first goal region , and 1 for second goal region
