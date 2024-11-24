@@ -94,7 +94,7 @@ class StackTwoCubesEnv(Env):
         self.action_mode = action_mode
         action_shape = {"joint": 6, "ee": 4}[action_mode]
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(action_shape,), dtype=np.float32)
-        
+
         self.num_dof = 6
         self.distance_threshold = distance_threshold
         self.reward_type = reward_type
@@ -233,7 +233,7 @@ class StackTwoCubesEnv(Env):
         """
         if np.array(action).shape != self.action_space.shape:
             raise ValueError("Action dimension mismatch")
-        
+
         action = np.clip(action, self.action_space.low, self.action_space.high)
 
         if self.action_mode == "ee":
@@ -246,11 +246,13 @@ class StackTwoCubesEnv(Env):
 
             # Use inverse kinematics to get the joint action wrt the end effector current position and displacement
             target_qpos = self.inverse_kinematics(ee_target_pos=ee_target_pos)
-            
-            #Update the robot gripper position based on the action 
+
+            # Update the robot gripper position based on the action
             target_gripper_pos = gripper_action * 0.2
-            current_gripper_joint_angle = self.data.qpos[self.num_dof-1].copy()
-            target_qpos[-1:] = np.clip(current_gripper_joint_angle + target_gripper_pos, self.ctrl_range[-1, 0], self.ctrl_range[-1, 1])
+            current_gripper_joint_angle = self.data.qpos[self.num_dof - 1].copy()
+            target_qpos[-1:] = np.clip(
+                current_gripper_joint_angle + target_gripper_pos, self.ctrl_range[-1, 0], self.ctrl_range[-1, 1]
+            )
         elif self.action_mode == "joint":
             target_low = np.array([-3.14159, -1.5708, -1.48353, -1.91986, -2.96706, -1.74533])
             target_high = np.array([3.14159, 1.22173, 1.74533, 1.91986, 2.96706, 0.0523599])
@@ -295,13 +297,13 @@ class StackTwoCubesEnv(Env):
         cube_blue_pos = self.np_random.uniform(self.cube_low, self.cube_high)
         cube_blue_rot = np.array([1.0, 0.0, 0.0, 0.0])
         robot_qpos = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.data.qpos[: self.num_dof] = robot_qpos 
+        self.data.qpos[: self.num_dof] = robot_qpos
         self.data.qpos[self.num_dof : self.num_dof + 7] = np.concatenate([cube_red_pos, cube_red_rot])
         self.data.qpos[self.num_dof + 7 : self.num_dof + 14] = np.concatenate([cube_blue_pos, cube_blue_rot])
 
         # Step the simulation
-        mujoco.mj_forward(self.model, self.data)   
-        
+        mujoco.mj_forward(self.model, self.data)
+
         return self.get_observation(), {}
 
     def step(self, action):
