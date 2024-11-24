@@ -80,7 +80,7 @@ class StackTwoCubesEnv(Env):
         observation_mode="image",
         action_mode="joint",
         reward_type="sparse",
-        block_gripper=True,
+        block_gripper=False,
         distance_threshold=0.05,
         cube_xy_range=0.3,
         n_substeps=20,
