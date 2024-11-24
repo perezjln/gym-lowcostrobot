@@ -334,11 +334,15 @@ class PushCubeEnv(Env):
         # Get the new observation
         observation = self.get_observation()
 
-        info = {"is_success": self.is_success(observation["cube_pos"], observation["target_pos"])}
+        # Get the position of the cube
+        cube_id = self.model.body("cube").id
+        cube_pos = self.data.body(cube_id).xpos.copy()
+
+        info = {"is_success": self.is_success(cube_pos, observation["target_pos"])}
 
         terminated = info["is_success"]
         truncated = False
-        reward = self.compute_reward(observation["cube_pos"], observation["target_pos"])
+        reward = self.compute_reward(cube_pos, observation["target_pos"])
         return observation, reward, terminated, truncated, info
 
     def goal_distance(self, goal_a, goal_b):

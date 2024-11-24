@@ -317,15 +317,19 @@ class ReachCubeEnv(Env):
         # Get the new observation
         observation = self.get_observation()
 
+        # Get the position of the cube
+        cube_id = self.model.body("cube").id
+        cube_pos = self.data.body(cube_id).xpos.copy()
+
         # Get the position of the cube and the distance between the end effector and the cube
         ee_id = self.model.site("end_effector_site").id
         ee_pos = self.data.site(ee_id).xpos.copy()
 
-        info = {"is_success": self.is_success(ee_pos, observation["cube_pos"])}
+        info = {"is_success": self.is_success(ee_pos, cube_pos)}
 
         terminated = info["is_success"]
         truncated = False
-        reward = self.compute_reward(ee_pos, observation["cube_pos"])
+        reward = self.compute_reward(ee_pos, cube_pos)
         return observation, reward, terminated, truncated, info
 
     def goal_distance(self, goal_a, goal_b):

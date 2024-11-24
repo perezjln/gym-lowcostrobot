@@ -327,9 +327,11 @@ class LiftCubeEnv(Env):
         observation = self.get_observation()
 
         # Get the position of the cube and the distance between the end effector and the cube
+        cube_id = self.model.body("cube").id
+        cube_pos = self.data.body(cube_id).xpos.copy()
         ee_id = self.model.site("end_effector_site").id
         ee_pos = self.data.site(ee_id).xpos.copy()
-        cube_z = observation["cube_pos"][2]
+        cube_z = cube_pos[2]
 
         # info = {"is_success": self.is_success(ee_pos, observation["cube_pos"])}
         info = {}
@@ -339,7 +341,7 @@ class LiftCubeEnv(Env):
 
         # Compute the reward (dense reward)
         reward_height = cube_z - self.height_threshold
-        reward_distance = np.linalg.norm(ee_pos - observation["cube_pos"])
+        reward_distance = np.linalg.norm(ee_pos - cube_pos)
         reward = reward_height + reward_distance
         return observation, reward, terminated, truncated, info
 

@@ -330,14 +330,21 @@ class StackTwoCubesEnv(Env):
         # Get the new observation
         observation = self.get_observation()
 
-        # The target position is the position of the red cube plus translated in the z-axis by the height of the red cube
-        target_pos = observation["cube_red_pos"] + np.array([0.0, 0.0, 0.03])
+        # Get the position of the blue cube and the red cube
+        cube_blue_id = self.model.body("cube_blue").id
+        cube_blue_pos = self.data.body(cube_blue_id).xpos.copy()
 
-        info = {"is_success": self.is_success(observation["cube_blue_pos"], target_pos)}
+        cube_red_id = self.model.body("cube_red").id
+        cube_red_pos = self.data.body(cube_red_id).xpos.copy()
+
+        # The target position is the position of the red cube plus translated in the z-axis by the height of the red cube
+        target_pos = cube_red_pos + np.array([0.0, 0.0, 0.03])
+
+        info = {"is_success": self.is_success(cube_blue_pos, target_pos)}
 
         terminated = info["is_success"]
         truncated = False
-        reward = self.compute_reward(observation["cube_blue_pos"], target_pos)
+        reward = self.compute_reward(cube_blue_pos, target_pos)
         return observation, reward, terminated, truncated, info
 
     def goal_distance(self, goal_a, goal_b):
