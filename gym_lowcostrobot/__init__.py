@@ -5,7 +5,6 @@ from gymnasium.envs.registration import register
 __version__ = "0.0.1"
 
 ASSETS_PATH = os.path.join(os.path.dirname(__file__), "assets", "low_cost_robot_6dof")
-BASE_LINK_NAME = "link_1"
 
 register(
     id="LiftCube-v0",
