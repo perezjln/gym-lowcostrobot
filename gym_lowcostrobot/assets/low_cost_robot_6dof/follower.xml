@@ -1,6 +1,6 @@
 <mujoco model="follower">
   <compiler angle="radian" meshdir="./follower_meshes/"/>
-  <option integrator="implicitfast" cone="elliptic" impratio="100" timestep="0.001"/>
+  <option integrator="implicitfast" cone="elliptic" impratio="100" timestep="0.002"/>
 
   <default>
     <default class="follower">
@@ -88,6 +88,8 @@
                 <geom mesh="link_5_motor" class="visual" material="black"/>
                 <geom mesh="link_5_collision" class="finger"/>
       
+                <site name="end_effector_site" pos="-0.06429 0.00327 0.0011" quat="1 0 0 0"/>
+
                 <body name="link_6" pos="-0.01315 -0.0075 0.0145">
                   <inertial pos="-0.02507 0.0010817 -0.01414" quat="0.528148 0.5474 0.466496 0.451436" mass="0.012831" diaginertia="3.49922e-06 2.45768e-06 1.4645e-06"/>
                   <joint name="joint_6" pos="0 0 0" axis="0 0 -1" range="-2.45 0.032"/>
@@ -95,7 +97,6 @@
                   <geom mesh="link_6_collision" class="finger"/>
                 </body>
 
-                <site name="end_effector" pos="-0.06429 0.00327 0.0011"/>
               </body>
             </body>
           </body>
